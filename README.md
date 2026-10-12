@@ -146,3 +146,29 @@ phase and does not retrigger the curve at each NoteOn. No MIDI or state
 semantics changed in the package-name correction.
 
 The new output must pass Windows CI/validator/125A Tester before download.
+
+## Verified build #17: NOTE CONTINUE / right-click / branded VST3
+
+The current development candidate includes a third Start Mode in the VST3
+controller: `HOST SYNC` / `NOTE CONTINUE` / `NOTE RETRIGGER`.
+Host automation value **1.0 continues to mean NOTE RETRIGGER**, while the
+new NOTE CONTINUE is **0.5**. Old version-1 project states with raw trigger
+1 are migrated to RETRIGGER before restore; state version 2 stores the new
+mode. The first NoteOn starts a phrase at Bar 1. Following NoteOns on the
+same channel continue the curve, even after NoteOff and short silent gaps;
+a new note after the complete pattern length starts a new phrase at Bar 1.
+The 18px right-click point hit area and native MouseDown deletion are covered
+by GUI-event regressions. This does not guarantee Studio One does not
+intercept right-click events; live host confirmation remains necessary.
+
+**QA:** [GitHub Actions Windows Build #17](https://github.com/challanger2000/125A-Pitchator/actions/runs/38317531984),
+commit `f00d25dc06abeb245232e71c358d8e39301795e0`:
+**8/8 CTest, 47/47 Steinberg Validator, 28/28 125A Tester PASS**. The
+final bundled Windows test artifact ID is `11777897198`. The official
+ZIP contains `125A Pitchator.vst3/Contents/x86_64-win/125A Pitchator.vst3`.
+The *renamed and staged package itself* was loaded by both Validator
+suites. CRC verified, no old DLL remains.
+
+**Still not FINAL:** Physical right click in Studio One, playback with two
+one-bar notes into a downstream synthesizer, project automation/reopen
+and visual GUI acceptance must be checked in the DAW.

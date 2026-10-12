@@ -378,3 +378,30 @@ HOST SYNC 0, NOTE CONTINUE 0.5, NOTE RETRIGGER 1.0. V1 serialized trigger
 1 is migrated at read time to V2 enum 2. V2 written state values 0/1/2
 retain their new meanings. Unit and VST3 controller migration tests assert
 both the legacy 1.0 and new Continue 0.5 semantics. Await new CI confirmation.
+
+## Final automated evidence for NOTE CONTINUE and branding — Build #17
+
+Run: https://github.com/challanger2000/125A-Pitchator/actions/runs/38317531984
+Tested commit `f00d25dc06abeb245232e71c358d8e39301795e0`.
+
+- Windows x64 SDK 3.8.1: **BUILD PASS**.
+- **8/8 CTest PASS**, including MIDI scheduler two one-bar notes, phrase
+  restarts, legacy V1 state and normalized automation compatibility,
+  direct GUI mouse/button interaction and layout geometry.
+- **47/47 Steinberg Validator PASS** on the staged branded VST3.
+- **125A Plugin Tester: 28 PASS / 0 WARNING / 0 FAIL** on the same bundle,
+  including native editor lifecycle and MIDI event probe.
+- Downloaded artifact ID `11777897198`, 1,638,932 bytes; ZIP CRC PASS.
+  All six archive entries start with `125A Pitchator.vst3/` and the actual
+  binary is `Contents/x86_64-win/125A Pitchator.vst3`. No unbranded
+  `Contents/x86_64-win/Pitchator.vst3` is present.
+- User-reported right-click deletion: 18px native pointer-down target
+  and preservation of neighboring nodes regression PASS, but right-click
+  propagation in Studio One itself **UNVERIFIED**.
+- New triggering mode NOTE CONTINUE: cross-NoteOff phrase clock
+  and restart after LENGTH test PASS. DAW receiving-synth bend range and
+  musical integration **UNVERIFIED**.
+- Manual-only GitHub Actions restored after all checks. No new CI run.
+
+**Gate status:** native and validator QA PASS; physical Studio One host
+interaction and user acceptance NOT VERIFIED; not Gumroad FINAL.

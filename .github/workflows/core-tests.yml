@@ -1,8 +1,6 @@
 name: Pitchator Windows VST3
 on:
-  # One bundled native package rename verification.
-  push:
-    branches: [v1.0.0]
+  # Manual-only: protect the 125A GitHub Actions budget.
   workflow_dispatch:
 permissions:
   contents: read
