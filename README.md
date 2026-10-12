@@ -102,3 +102,25 @@ Validated commit `a2230df10aa7fd35636d26d7fbb9590cdf34f84b`:
 - New test artifact ID `11768729087`; full bundle in ZIP.
 
 [125A QA traceability](docs/QA_TRACEABILITY.md) contains host/test limits.
+
+## Layout and vector master redesign — pending Build #12
+
+The static GUI has been realigned at its original **1200×620 logical**
+size, with proportional 150% scaling to 1800×930. The headline and
+subtitle are geometrically centered at x=600. The authoritative
+125A-Branding master SVG is rendered as exact even-odd vector paths
+(30 compound path groups, 2811 path commands), preserving the red A
+stroke and all original contours; no synthetic font recreation, bitmap,
+or derivative asset is used.
+
+The top panel is now eight aligned columns; the label row and every
+menu/switch share consistent baselines, and LOCK/LOOP/BYPASS buttons are
+105/90/105px wide. All headings are transparent rather than black blocks.
+Footer commands are 32px high with consistent margins and gaps.
+The Pitch Curve's selectable nodes use pale blue against the turquoise
+curve. DSP, controller IDs, state and MIDI logic are unchanged.
+
+`PitchatorUILayoutTests` covers labels, clickable bounding boxes,
+spacing, conservative text extents, vector logo registration and 100/150%
+rectangles. **Real Studio One appearance remains NOT VERIFIED** until
+a newly compiled bundle is tested in the DAW.

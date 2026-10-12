@@ -1,6 +1,8 @@
 name: Pitchator Windows VST3
 on:
-  # Manual-only release QA. Re-enable push for one explicit bundled verification, if needed.
+  # One batched native GUI geometry/vector and full release QA run.
+  push:
+    branches: [v1.0.0]
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,7 +14,7 @@ jobs:
       - name: Configure pinned SDK
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
       - name: Build VST3 and Validator
-        run: cmake --build build --config Release --target Pitchator PitchEngineTests PitchSchedulerTests CurveMailboxTests PitchatorUIContractTests PitchatorParameterFlushTests PitchPointEditTests PitchCurveMouseEventsTests validator --parallel
+        run: cmake --build build --config Release --target Pitchator PitchEngineTests PitchSchedulerTests CurveMailboxTests PitchatorUIContractTests PitchatorParameterFlushTests PitchPointEditTests PitchCurveMouseEventsTests PitchatorUILayoutTests validator --parallel
       - name: Core Tests
         run: ctest --test-dir build -C Release --output-on-failure
       - name: Validate VST3

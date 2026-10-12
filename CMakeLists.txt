@@ -10,6 +10,11 @@ add_executable(CurveMailboxTests tests/CurveMailboxTests.cpp)
 add_executable(PitchatorUIContractTests tests/UIContractTests.cpp)
 add_executable(PitchPointEditTests tests/PitchPointEditTests.cpp)
 add_executable(PitchCurveMouseEventsTests tests/CurveMouseEventsTests.cpp src/PitchCurveView.cpp)
+add_executable(PitchatorUILayoutTests tests/UILayoutTests.cpp)
+target_compile_definitions(PitchatorUILayoutTests PRIVATE
+ PITCHATOR_UIDESC_PATH="${CMAKE_SOURCE_DIR}/src/resource/pitchator.uidesc"
+ PITCHATOR_LOGO_SRC_PATH="${CMAKE_SOURCE_DIR}/src/BrandLogoView.cpp"
+ PITCHATOR_SRC_PATH="${CMAKE_SOURCE_DIR}/src/PitchatorVST.cpp")
 target_compile_definitions(PitchatorUIContractTests PRIVATE
  PITCHATOR_UIDESC_PATH="${CMAKE_SOURCE_DIR}/src/resource/pitchator.uidesc"
  PITCHATOR_SRC_PATH="${CMAKE_SOURCE_DIR}/src/PitchatorVST.cpp"
@@ -20,6 +25,7 @@ add_test(NAME CurveMailboxTests COMMAND CurveMailboxTests)
 add_test(NAME PitchatorUIContractTests COMMAND PitchatorUIContractTests)
 add_test(NAME PitchPointEditTests COMMAND PitchPointEditTests)
 add_test(NAME PitchCurveMouseEventsTests COMMAND PitchCurveMouseEventsTests)
+add_test(NAME PitchatorUILayoutTests COMMAND PitchatorUILayoutTests)
 # VST3 processor/controller integration regression reproduces the
 # Steinberg Validator's zero-buffer BYPASS persistence sequence.
 

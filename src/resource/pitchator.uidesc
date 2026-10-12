@@ -12,6 +12,7 @@
   <font name="Title" font-name="Arial" size="28" bold="true" italic="false"/>
   <font name="Section" font-name="Arial" size="17" bold="true" italic="false"/>
   <font name="Small" font-name="Arial" size="13" bold="false" italic="false"/>
+  <font name="Caption" font-name="Arial" size="12" bold="false" italic="false"/>
  </fonts>
  <control-tags>
   <control-tag name="Key" tag="100"/>
@@ -36,47 +37,100 @@
  <template name="PitchatorView" class="CViewContainer" origin="0, 0"
   size="1200, 620" minSize="1200, 620" maxSize="1800, 930"
   transparent="false" background-color="Bg">
-  <view class="CTextLabel" origin="34, 22" size="350, 36" title="125A  PITCHATOR"
-   font="Title" font-color="Text" transparent="true" text-alignment="left"/>
-  <view class="CTextLabel" origin="36, 61" size="420, 20" title="MIDI PITCH CURVE SEQUENCER"
-   font="Small" font-color="Muted" transparent="true"/>
+  <!-- Official 125A vector master, drawn from source paths without raster loss. -->
+  <view class="CView" origin="30, 12" size="148, 74"
+    pitchator-id="logo" transparent="true"/>
+  <view class="CTextLabel" origin="330, 20" size="540, 38" title="125A PITCHATOR"
+   font="Title" font-color="Text" transparent="true" text-alignment="center"/>
+  <view class="CTextLabel" origin="350, 60" size="500, 22" title="MIDI PITCH CURVE SEQUENCER"
+   font="Small" font-color="Muted" transparent="true" text-alignment="center"/>
   <view class="CTextButton" control-tag="UiZoom" origin="1055, 30" size="110, 34"
     title="100 %" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>
+  <!-- 8-group parameter grid. All controls share y=39 with centered column labels. -->
   <view class="CViewContainer" origin="24, 96" size="1152, 112"
    transparent="false" background-color="Panel">
-    <view class="CTextLabel" origin="17, 9" size="90, 18" title="KEY" font="Small" font-color="Muted"/>
-    <view class="COptionMenu" control-tag="Key" origin="17, 36" size="90, 30" font-color="Text" back-color="Bg" frame-color="Edge" menu-popup-style="true"/>
-    <view class="CTextLabel" origin="130, 9" size="160, 18" title="SCALE" font="Small" font-color="Muted"/>
-    <view class="COptionMenu" control-tag="Scale" origin="130, 36" size="180, 30" font-color="Text" back-color="Bg" frame-color="Edge" menu-popup-style="true"/>
-    <view class="CTextLabel" origin="330, 9" size="120, 18" title="LENGTH (BARS)" font="Small" font-color="Muted"/>
-    <view class="CSlider" control-tag="Bars" origin="330, 44" size="114, 16" mode="free click" orientation="horizontal" transparent="false" draw-back="true" draw-value="true" draw-back-color="Bg" draw-value-color="Accent"/>
-    <view class="CTextEdit" control-tag="Bars" origin="456, 39" size="46, 26" back-color="Bg" frame-color="Edge" font-color="Text" font="Small" value-precision="0"/>
-    <view class="CTextLabel" origin="520, 9" size="140, 18" title="BEND RANGE (ST)" font="Small" font-color="Muted"/>
-    <view class="CSlider" control-tag="Range" origin="520, 44" size="114, 16" mode="free click" orientation="horizontal" transparent="false" draw-back="true" draw-value="true" draw-back-color="Bg" draw-value-color="Accent"/>
-    <view class="CTextEdit" control-tag="Range" origin="647, 39" size="46, 26" back-color="Bg" frame-color="Edge" font-color="Text" font="Small" value-precision="0"/>
-    <view class="CTextLabel" origin="710, 9" size="150, 18" title="START MODE" font="Small" font-color="Muted"/>
-    <view class="COptionMenu" control-tag="Trigger" origin="710, 36" size="155, 30" font-color="Text" back-color="Bg" frame-color="Edge" menu-popup-style="true"/>
-    <view class="CTextButton" control-tag="Lock" origin="886, 36" size="78, 30" title="LOCK OFF" text-color="Text" font="Small" frame-color="Edge"/>
-    <view class="CTextButton" control-tag="Loop" origin="974, 36" size="68, 30" title="LOOP ON" text-color="Text" font="Small" frame-color="Edge"/>
-    <view class="CTextButton" control-tag="Bypass" origin="1053, 36" size="80, 30" title="BYPASS OFF" text-color="Text" font="Small" frame-color="Edge"/>
+    <view class="CTextLabel" origin="16, 24" size="80, 19" title="KEY"
+      font="Caption" font-color="Muted" transparent="true" text-alignment="center"/>
+    <view class="COptionMenu" control-tag="Key" origin="16, 52" size="80, 32"
+      font="Small" font-color="Text" back-color="Bg" frame-color="Edge" menu-popup-style="true"/>
+
+    <view class="CTextLabel" origin="114, 24" size="170, 19" title="SCALE"
+      font="Caption" font-color="Muted" transparent="true" text-alignment="center"/>
+    <view class="COptionMenu" control-tag="Scale" origin="114, 52" size="170, 32"
+      font="Small" font-color="Text" back-color="Bg" frame-color="Edge" menu-popup-style="true"/>
+
+    <view class="CTextLabel" origin="304, 24" size="152, 19" title="LENGTH (BARS)"
+      font="Caption" font-color="Muted" transparent="true" text-alignment="center"/>
+    <view class="CSlider" control-tag="Bars" origin="304, 60" size="106, 16"
+      mode="free click" orientation="horizontal" transparent="false"
+      draw-back="true" draw-value="true" draw-back-color="Bg" draw-value-color="Accent"/>
+    <view class="CTextEdit" control-tag="Bars" origin="418, 52" size="38, 32"
+      font="Small" back-color="Bg" frame-color="Edge" font-color="Text" value-precision="0"/>
+
+    <view class="CTextLabel" origin="476, 24" size="152, 19" title="BEND RANGE (ST)"
+      font="Caption" font-color="Muted" transparent="true" text-alignment="center"/>
+    <view class="CSlider" control-tag="Range" origin="476, 60" size="106, 16"
+      mode="free click" orientation="horizontal" transparent="false"
+      draw-back="true" draw-value="true" draw-back-color="Bg" draw-value-color="Accent"/>
+    <view class="CTextEdit" control-tag="Range" origin="590, 52" size="38, 32"
+      font="Small" back-color="Bg" frame-color="Edge" font-color="Text" value-precision="0"/>
+
+    <view class="CTextLabel" origin="647, 24" size="158, 19" title="START MODE"
+      font="Caption" font-color="Muted" transparent="true" text-alignment="center"/>
+    <view class="COptionMenu" control-tag="Trigger" origin="647, 52" size="158, 32"
+      font="Small" font-color="Text" back-color="Bg" frame-color="Edge" menu-popup-style="true"/>
+
+    <view class="CTextLabel" origin="817, 24" size="105, 19" title="SCALE LOCK"
+      font="Caption" font-color="Muted" transparent="true" text-alignment="center"/>
+    <view class="CTextButton" control-tag="Lock" origin="817, 52" size="105, 32"
+      title="LOCK OFF" font="Small" text-color="Text" frame-color="Edge"/>
+
+    <view class="CTextLabel" origin="933, 24" size="90, 19" title="LOOP"
+      font="Caption" font-color="Muted" transparent="true" text-alignment="center"/>
+    <view class="CTextButton" control-tag="Loop" origin="933, 52" size="90, 32"
+      title="LOOP ON" font="Small" text-color="Text" frame-color="Edge"/>
+
+    <view class="CTextLabel" origin="1033, 24" size="105, 19" title="BYPASS"
+      font="Caption" font-color="Muted" transparent="true" text-alignment="center"/>
+    <view class="CTextButton" control-tag="Bypass" origin="1033, 52" size="105, 32"
+      title="BYPASS OFF" font="Small" text-color="Text" frame-color="Edge"/>
   </view>
-  <view class="CTextLabel" origin="36, 219" size="330, 24" title="PITCH CURVE"
-   font="Section" font-color="Accent" transparent="true"/>
-  <view class="CTextLabel" origin="681, 225" size="480, 18"
+  <view class="CTextLabel" origin="36, 219" size="320, 24" title="PITCH CURVE"
+   font="Section" font-color="Accent" transparent="true" text-alignment="left"/>
+  <view class="CTextLabel" origin="770, 223" size="394, 20"
    title="LEFT: ADD / DRAG   |   RIGHT: DELETE POINT"
-   font="Small" font-color="Muted" text-alignment="right" transparent="true"/>
+   font="Caption" font-color="Muted" text-alignment="right" transparent="true"/>
   <view class="CView" origin="30, 248" size="1140, 267"
    pitchator-id="curve" transparent="false" background-color="Panel"/>
-  <view class="CTextLabel" origin="38, 524" size="199, 22" title="POSITION (BAR.BEAT.TICK)" font="Small" font-color="Muted"/>
-  <view class="CTextEdit" control-tag="PointPosition" origin="240, 520" size="115, 29" font="Small" font-color="Text" back-color="Panel" frame-color="Edge" title="1.1.000"/>
-  <view class="CTextLabel" origin="375, 524" size="92, 22" title="PITCH (ST)" font="Small" font-color="Muted"/>
-  <view class="CTextEdit" control-tag="PointPitch" origin="472, 520" size="105, 29" font="Small" font-color="Text" back-color="Panel" frame-color="Edge" title="+0.00"/>
-  <view class="CTextButton" control-tag="Clear" origin="36, 555" size="128, 32" title="CLEAR PATTERN" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>
-  <view class="CTextButton" control-tag="Delete" origin="173, 555" size="118, 32" title="DELETE POINT" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>
-  <view class="CTextButton" control-tag="Shape" origin="301, 555" size="150, 32" title="CURVE: LINEAR" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>
-  <view class="CTextButton" control-tag="Snap" origin="461, 555" size="105, 32" title="SNAP ON" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>
-  <view class="CTextButton" control-tag="Previous" origin="722, 555" size="105, 32" title="&lt; BAR" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>
-  <view class="CTextButton" control-tag="Next" origin="836, 555" size="105, 32" title="BAR &gt;" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>
-  <view class="CTextButton" control-tag="GraphZoom" origin="951, 555" size="214, 32" title="GRAPH ZOOM" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>
+  <!-- Exact point inspector, aligned baseline and 12 px label/control gutters. -->
+  <view class="CTextLabel" origin="38, 520" size="194, 30"
+    title="POSITION (BAR.BEAT.TICK)" font="Caption" font-color="Muted"
+    transparent="true" text-alignment="left"/>
+  <view class="CTextEdit" control-tag="PointPosition" origin="244, 520" size="122, 30"
+    font="Small" font-color="Text" back-color="Panel" frame-color="Edge"
+    title="1.1.000"/>
+  <view class="CTextLabel" origin="386, 520" size="90, 30"
+    title="PITCH (ST)" font="Caption" font-color="Muted" transparent="true"
+    text-alignment="left"/>
+  <view class="CTextEdit" control-tag="PointPitch" origin="490, 520" size="108, 30"
+    font="Small" font-color="Text" back-color="Panel" frame-color="Edge"
+    title="+0.00"/>
+
+  <!-- Intentional two clusters: pattern editing / bar navigation. Uniform 32 px height. -->
+  <view class="CTextButton" control-tag="Clear" origin="36, 556" size="136, 32"
+    title="CLEAR PATTERN" font="Small" text-color="Text" frame-color="Edge" kick-style="true"/>
+  <view class="CTextButton" control-tag="Delete" origin="182, 556" size="126, 32"
+    title="DELETE POINT" font="Small" text-color="Text" frame-color="Edge" kick-style="true"/>
+  <view class="CTextButton" control-tag="Shape" origin="318, 556" size="160, 32"
+    title="CURVE: LINEAR" font="Small" text-color="Text" frame-color="Edge" kick-style="true"/>
+  <view class="CTextButton" control-tag="Snap" origin="488, 556" size="108, 32"
+    title="SNAP ON" font="Small" text-color="Text" frame-color="Edge" kick-style="true"/>
+
+  <view class="CTextButton" control-tag="Previous" origin="739, 556" size="108, 32"
+    title="&lt; BAR" font="Small" text-color="Text" frame-color="Edge" kick-style="true"/>
+  <view class="CTextButton" control-tag="Next" origin="857, 556" size="108, 32"
+    title="BAR &gt;" font="Small" text-color="Text" frame-color="Edge" kick-style="true"/>
+  <view class="CTextButton" control-tag="GraphZoom" origin="975, 556" size="189, 32"
+    title="GRAPH ZOOM" font="Small" text-color="Text" frame-color="Edge" kick-style="true"/>
  </template>
 </vstgui-ui-description>

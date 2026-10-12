@@ -276,3 +276,26 @@ was independently downloaded and CRC checked, and contains
 | Graph text redraw | Explicit font state before drawing every frame and corrected idle/active button text colors | Visual Studio One redraw NOT VERIFIED |
 
 The above **does not** claim complete physical DAW interaction or GUI final signoff.
+
+## Static UI layout correction (2026-10-12; build pending)
+
+Rebuilt 1200x620 GUI grid from user's Studio One screenshot:
+- Header logo official master at (30,12), 148x74; main heading and
+  subtitle share center x=600; zoom at (1055,30), size 110x34.
+- Top settings panel x=24,y=96,w=1152,h=112. Eight groups:
+  KEY x16/w80; SCALE x114/w170; LENGTH x304/w152; RANGE x476/w152;
+  START x647/w158; LOCK x817/w105; LOOP x933/w90;
+  BYPASS x1033/w105. Caption y24/19; option/input/button y52/32;
+  sliders y60/16. No clickable overlap; minimum inter-group gap 10px.
+- Removed the default black opaque label rectangles; all labels are
+  transparent, using centered Caption font for consistent hierarchy.
+- Graph and pitch inspector retain 1140x267 chart area, y248; input
+  controls at y520. Footer commands now share y556/h32 with 10px gaps
+  and intentional left/right clusters.
+- Logo master exactly matches current 125A-Branding SVG; an exact
+  2811-command vector renderer uses even-odd fills, no font redraw.
+- Unselected/selected node fills now use blue variations, graph line
+  retains turquoise. MIDI engine and state remain unchanged.
+- Added fail-fast 8th CTest to validate text-width headroom, collisions,
+  baselines, correct logo and 100/150% extents. **This is NOT a Studio
+  One physical GUI PASS**; native code build and user inspection pending.

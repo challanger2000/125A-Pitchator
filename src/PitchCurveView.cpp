@@ -14,6 +14,8 @@ constexpr CColor kPanel(22,33,41,255);
 constexpr CColor kGrid(54,75,85,255);
 constexpr CColor kBar(88,114,123,255);
 constexpr CColor kLine(48,201,178,255);
+constexpr CColor kNode(93,171,237,255);
+constexpr CColor kNodeSelected(195,223,251,255);
 constexpr CColor kText(211,225,226,255);
 constexpr CColor kWarning(239,138,111,255);
 }
@@ -97,7 +99,7 @@ void PitchCurveView::draw(CDrawContext* dc){
   const auto& p=pattern_.at(i);
   if(p.tick<scrollBar_*kTicksPerBar||p.tick>(scrollBar_+viewBars_)*kTicksPerBar)continue;
   const double x=tickToX(p.tick),y=semitoneToY(p.semitones);
-  dc->setFillColor(p.tick==selectedTick_?kText:kLine);
+  dc->setFillColor(p.tick==selectedTick_?kNodeSelected:kNode);
   dc->setFrameColor(kBackground);
   dc->drawEllipse(CRect(x-6,y-6,x+6,y+6),kDrawFilledAndStroked);
  }

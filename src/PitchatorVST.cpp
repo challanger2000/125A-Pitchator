@@ -1,5 +1,6 @@
 #include "PitchatorVST.h"
 #include "PitchCurveView.h"
+#include "BrandLogoView.h"
 #include "vstgui/uidescription/uiattributes.h"
 #include "vstgui/lib/controls/cbuttons.h"
 #include "vstgui/lib/controls/ccontrol.h"
@@ -351,6 +352,7 @@ VSTGUI::CView* PitchatorController::verifyView(
           const VSTGUI::IUIDescription*,VSTGUI::VST3Editor* editor){
  activeEditor_=editor;
  if(auto* id=attrs.getAttributeValue("pitchator-id")){
+  if(*id=="logo")return new pitchator::BrandLogoView(view->getViewSize());
   if(*id=="curve"){
    auto* graph=new pitchator::PitchCurveView(view->getViewSize(),guiPattern_,
                        [this]{return publishPattern();},[this]{syncPointEditors();});
