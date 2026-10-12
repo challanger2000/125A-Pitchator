@@ -11,7 +11,11 @@ int main(){
  TEST(read.bars()==16&&read.size()==3&&read.at(2).tick==57600);
  packet.points[1].curve=99;TEST(!unpackCurve(packet,read));
  packet=packCurve(original);packet.points[2].tick=960;
- TEST(!unpackCurve(packet,read));
+ // PCV2 intentionally permits two ordered same-tick nodes: a JUMP.
+ TEST(unpackCurve(packet,read)&&read.hasJumps()&&read.size()==3);
+ packet.magic=kLegacyCurvePacketMagic;
+ TEST(!unpackCurve(packet,read)); // PCV1 never allowed a second knot
+ TEST(unpackCurve(packCurve(original),read));
  packet=packCurve(original);
  CurveMailbox channel(original);
  uint64_t revision=0;Pattern snapshot;

@@ -9,6 +9,7 @@
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include <cstdio>
+#include <memory>
 #include "vstgui/lib/vstguiinit.h"
 #include "vstgui/lib/events.h"
 #include "vstgui/lib/controls/cbuttons.h"
@@ -38,11 +39,11 @@ static bool flushBypass(PitchatorProcessor& processor,ParamValue value){
  data.numOutputs=0;
  data.inputParameterChanges=&changes;
  data.outputEvents=nullptr;  // crucial: validator flushes with no event list
- return processor.process(data)==kResultOk;
+ return processor->process(data)==kResultOk;
 }
 static int runTests(){
 
- PitchatorProcessor processor;
+ auto processor=std::make_unique<PitchatorProcessor>();
  PitchatorController controller;
  CHECK(controller.initialize(nullptr)==kResultOk);
  bool foundThreeTriggers=false;
@@ -54,12 +55,12 @@ static int runTests(){
   }
  }
  CHECK(foundThreeTriggers);
- CHECK(flushBypass(processor,1));
+ CHECK(flushBypass(*processor,1));
  MemoryStream snapshot;
- CHECK(processor.getState(&snapshot)==kResultOk);
- CHECK(flushBypass(processor,0));
+ CHECK(processor->getState(&snapshot)==kResultOk);
+ CHECK(flushBypass(*processor,0));
  MemoryStream zeroState;
- CHECK(processor.getState(&zeroState)==kResultOk);
+ CHECK(processor->getState(&zeroState)==kResultOk);
  CHECK(zeroState.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&zeroState)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchBypass)==0.0);
@@ -67,16 +68,16 @@ static int runTests(){
  CHECK(controller.setComponentState(&snapshot)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchBypass)==1.0);
  CHECK(snapshot.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
- PitchatorProcessor restored;
- CHECK(restored.setState(&snapshot)==kResultOk);
+ auto restored=std::make_unique<PitchatorProcessor>();
+ CHECK(restored->setState(&snapshot)==kResultOk);
  MemoryStream roundtrip;
- CHECK(restored.getState(&roundtrip)==kResultOk);
+ CHECK(restored->getState(&roundtrip)==kResultOk);
  CHECK(roundtrip.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&roundtrip)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchBypass)==1.0);
  // Integration probe: GUI-shaped CurvePacket -> IMessage -> processor
  // mailbox -> real ProcessData MIDI output list, *not* just a curve-unit test.
- PitchatorProcessor routed;
+ auto routed=std::make_unique<PitchatorProcessor>();
  pitchator::Pattern modified;
  CHECK(modified.setBars(2));
  CHECK(modified.upsert({960,-3.0,pitchator::Curve::Step}));
@@ -85,14 +86,14 @@ static int runTests(){
  auto packed=pitchator::packCurve(modified);
  CHECK(message.getAttributes()->setBinary("Curve",&packed,
        static_cast<uint32>(sizeof(packed)))==kResultOk);
- CHECK(routed.notify(&message)==kResultOk);
+ CHECK(routed->notify(&message)==kResultOk);
  // Invalid GUI messages must not overwrite the last accepted snapshot.
  packed.magic=0;
  HostMessage invalid;
  invalid.setMessageID("125A.Pitchator.Curve");
  CHECK(invalid.getAttributes()->setBinary("Curve",&packed,
        static_cast<uint32>(sizeof(packed)))==kResultOk);
- CHECK(routed.notify(&invalid)==kResultFalse);
+ CHECK(routed->notify(&invalid)==kResultFalse);
  EventList midiIn(32),midiOut(128);
  Event on{};
  on.busIndex=0;on.type=Event::kNoteOnEvent;on.sampleOffset=12;
@@ -115,7 +116,7 @@ static int runTests(){
  block.numInputs=0;block.numOutputs=0;
  block.inputEvents=&midiIn;block.outputEvents=&midiOut;
  block.processContext=&clock;
- CHECK(routed.process(block)==kResultOk);
+ CHECK(routed->process(block)==kResultOk);
  // Expect bend first (the NoteOn at 12 must already sound transposed),
  // then original NoteOn, NoteOff and precise channel pitch center.
  CHECK(midiOut.getEventCount()==4);
@@ -140,10 +141,10 @@ static int runTests(){
  CHECK((static_cast<int>(bendReset.midiCCOut.value)&127)+
        ((static_cast<int>(bendReset.midiCCOut.value2)&127)<<7)==8192);
  MemoryStream routedSaved;
- CHECK(routed.getState(&routedSaved)==kResultOk);
+ CHECK(routed->getState(&routedSaved)==kResultOk);
  CHECK(routedSaved.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
- PitchatorProcessor reopened;
- CHECK(reopened.setState(&routedSaved)==kResultOk);
+ auto reopened=std::make_unique<PitchatorProcessor>();
+ CHECK(reopened->setState(&routedSaved)==kResultOk);
  // Backward compatibility: V1 trigger 1 and normalized 1.0 must still
  // represent NOTE RETRIGGER. The new NOTE CONTINUE occupies 0.5.
  auto writeLegacy = [](MemoryStream& stream,uint32 legacyVersion=1u)->bool{
@@ -167,8 +168,8 @@ static int runTests(){
  MemoryStream legacy;
  CHECK(writeLegacy(legacy));
  CHECK(legacy.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
- PitchatorProcessor legacyProcessor;
- CHECK(legacyProcessor.setState(&legacy)==kResultOk);
+ auto legacyProcessor=std::make_unique<PitchatorProcessor>();
+ CHECK(legacyProcessor->setState(&legacy)==kResultOk);
  CHECK(legacy.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&legacy)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchTrigger)==1.0);
@@ -176,8 +177,8 @@ static int runTests(){
  MemoryStream versionTwo;
  CHECK(writeLegacy(versionTwo,2u));
  CHECK(versionTwo.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
- PitchatorProcessor v2Processor;
- CHECK(v2Processor.setState(&versionTwo)==kResultOk);
+ auto v2Processor=std::make_unique<PitchatorProcessor>();
+ CHECK(v2Processor->setState(&versionTwo)==kResultOk);
  CHECK(versionTwo.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&versionTwo)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchTrigger)==0.5);
@@ -191,12 +192,12 @@ static int runTests(){
  CHECK(triggerQueue!=nullptr);
  CHECK(triggerQueue->addPoint(0,0.5,pointIndex)==kResultOk);
  ProcessData flush{};flush.numSamples=0;flush.inputParameterChanges=&triggerChanges;
- CHECK(legacyProcessor.process(flush)==kResultOk);
+ CHECK(legacyProcessor->process(flush)==kResultOk);
  MemoryStream continueState;
- CHECK(legacyProcessor.getState(&continueState)==kResultOk);
+ CHECK(legacyProcessor->getState(&continueState)==kResultOk);
  CHECK(continueState.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
- PitchatorProcessor continueRestored;
- CHECK(continueRestored.setState(&continueState)==kResultOk);
+ auto continueRestored=std::make_unique<PitchatorProcessor>();
+ CHECK(continueRestored->setState(&continueState)==kResultOk);
  CHECK(continueState.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&continueState)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchTrigger)==0.5);
@@ -347,11 +348,11 @@ static int runTests(){
  HostMessage jumpMessage;jumpMessage.setMessageID("125A.Pitchator.Curve");
  CHECK(jumpMessage.getAttributes()->setBinary("Curve",&jumped,
        static_cast<uint32>(sizeof(jumped)))==kResultOk);
- CHECK(routed.notify(&jumpMessage)==kResultOk);
- MemoryStream jumpSaved;CHECK(routed.getState(&jumpSaved)==kResultOk);
+ CHECK(routed->notify(&jumpMessage)==kResultOk);
+ MemoryStream jumpSaved;CHECK(routed->getState(&jumpSaved)==kResultOk);
  CHECK(jumpSaved.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
- PitchatorProcessor jumpReopened;
- CHECK(jumpReopened.setState(&jumpSaved)==kResultOk);
+ auto jumpReopened=std::make_unique<PitchatorProcessor>();
+ CHECK(jumpReopened->setState(&jumpSaved)==kResultOk);
  CHECK(jumpSaved.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&jumpSaved)==kResultOk);
  CHECK(graph->pattern().size()==3&&graph->pattern().hasJumps());

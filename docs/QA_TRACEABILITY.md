@@ -465,3 +465,17 @@ The next Windows run must pass all tests before any artifact is offered.
   corrupt packets/triples, mailbox snapshots, selected-knot editing,
   host-style click simulation, UI layout and project restore.
 - Studio One real host interaction & audibility **NOT VERIFIED**.
+
+## Build #21 tests (2026-10-12)
+
+The real Windows VST3 and new engine compiled successfully, 7/9 CTest
+passed. PitchEngineTests/PitchSchedulerTests/CurveMouseEventsTests,
+UILayout and scale reference were PASS. Two test-harness corrections:
+(1) PCV2 intentionally accepts two same-tick knots, so the historical
+CurveMailboxTests rejection assertion was changed to test PCV1 rejection
+and PCV2 ordered-pair acceptance; (2) ParameterFlushTests instantiated
+multiple very large VST3 Processor objects as local variables, including
+two new state-restore regression probes, exhausting the default Windows
+EXE stack. All Processor test fixtures now live on the heap through RAII
+std::unique_ptr, without changing production allocation or real-time code.
+Full suite, Steinberg and 125A QA remain PENDING after this correction.
