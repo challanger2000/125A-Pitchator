@@ -49,9 +49,11 @@ Do not develop on main. Bundle commits/CI. No false FULL AUDIT claims.
 Final release: Steinberg Validator, 125A Tester, editor lifecycle, exact event
 routing, Studio One host playback and complete UI/parameter/end-to-end audit.
 
-## Explicitly not implemented in this initial commit
-VST3 wrapper/controller and output event scheduler; graphical curve editor;
-GUI branding and VSTGUI; host state serialization and DAW test evidence.
+## Historical scope statement
+The first commit did not contain the VST3 wrapper, GUI or state serialization.
+These components have since been implemented and Windows-compiled in the
+development branch. The hostless event-list tests and validator are green,
+but practical Studio One/GUI lifecycle/125A Tester evidence is still missing.
 
 ## Numeric editing contract (V1 extension)
 Use BAR.BEAT.TICK (e.g. 2.3.120; ticks 0–959 inside each beat);

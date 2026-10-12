@@ -1,9 +1,6 @@
 name: Pitchator Windows VST3
 on:
-  # Manual-only after Build #5, to avoid CI on each development commit.
-  # Exactly one batched verification on this feature commit; return to manual afterward.
-  push:
-    branches: [v1.0.0]
+  # Manual-only: avoid Actions for every small source change.
   workflow_dispatch:
 permissions:
   contents: read

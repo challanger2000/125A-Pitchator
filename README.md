@@ -19,7 +19,11 @@ selection and variable pitch-axis scaling. It publishes validated snapshots
 to the processor. **Windows x64 build, CTest and Steinberg validator are verified; Studio One GUI/MIDI interaction is still unverified**.
 
 See [Native VST3 milestone](docs/NATIVE-VST3-MILESTONE.md) for engineering
-limits and required tests. Verified CI evidence: [Windows build #5](https://github.com/challanger2000/125A-Pitchator/actions/runs/38253823977),
+limits and required tests. The newest verified prototype evidence is
+[Windows Build #7](https://github.com/challanger2000/125A-Pitchator/actions/runs/38256289397):
+**6/6 CTest + 47/47 Steinberg Validator PASS**; SDK-based MIDI
+event-list route checks PASS. Artifact `Pitchator-Windows-VST3-Prototype`
+ID `11750955918`. Verified CI evidence: [Windows build #5](https://github.com/challanger2000/125A-Pitchator/actions/runs/38253823977),
 commit `6a39f02`: **5/5 CTest PASS, 47/47 Steinberg Validator PASS**,
 prototype artifact uploaded. This is *not* GUI click, Studio One routing,
 125A Plugin Tester, or FINAL evidence.

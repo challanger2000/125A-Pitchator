@@ -118,3 +118,22 @@ sample position. Also checks serialized/reopened processor state.
 This establishes SDK object-level event evidence, but not actual Studio One
 routing or physical GUI click/drag behavior. Status remains pending
 successful Windows CI for this test.
+
+## Windows QA — Build #7 (2026-10-12)
+
+Workflow: https://github.com/challanger2000/125A-Pitchator/actions/runs/38256289397
+Commit: `ec927c590771ce29355e204fe4b80af39f04e2d2`.
+- Windows x64 / Steinberg SDK 3.8.1: **BUILD PASS**.
+- **6/6 CTest PASS**, including exact numeric entry and
+  `PitchatorParameterFlushTests` with real SDK MIDI `EventList`,
+  `HostMessage`, `ProcessData` and state restoration.
+- **47/47 Steinberg Validator PASS** (six tests do not replace the 47 validator gates).
+- GitHub Actions prototype artifact `11750955918` generated from the
+  validated commit.
+- On the SDK input/output event-list test, a GUI-equivalent -3-st curve
+  message was accepted, malformed packets rejected, channel 3 pitch bend
+  was delivered before original NoteOn (ID 42), followed by original
+  NoteOff and center bend at offset 128. Processor state reopened.
+- **NOT YET VERIFIED:** Studio One MIDI routing/receiving synthesizer,
+  GUI mouse hitboxes/resize 100%/150%, repeated editor lifecycle,
+  125A Tester and full practical release audit. Do not mark FINAL.
