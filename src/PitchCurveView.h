@@ -29,6 +29,10 @@ public:
  bool editSelectedTick(int32_t tick);
  bool editSelectedPitch(double semitones);
  int32_t selectedTick()const noexcept {return selectedTick_;}
+ // Read-only hostless GUI integration-test probes, never mutate state.
+ const Pattern& pattern() const noexcept {return pattern_;}
+ int visibleBars()const noexcept {return viewBars_;}
+ int scrollBar()const noexcept {return scrollBar_;}
 private:
  Pattern& pattern_;
  std::function<bool()> publish_;

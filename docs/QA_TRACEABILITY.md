@@ -218,3 +218,34 @@ Fix: use VSTGUI parent-local mouse positions unchanged, matching
 regression that asserts click insert, drag, select, right-click delete,
 origin immutability and out-of-bounds rejection at real graph bounds.
 After build, real Studio One physical GUI test remains NOT VERIFIED.
+
+## Complete first-pass GUI-control audit after user feedback (2026-10-12)
+
+- USER-REPORTED FAIL: Scale Lock, Loop, Bypass do not operate in Studio One.
+  Source previously relied on implicit VST3Editor parameter listeners; these three
+  CTextButtons are now explicitly bound to controller gesture begin/perform/end.
+  ON and OFF each send a normalized parameter edit, with UI state synchronized
+  after host automation and project restore.
+- USER-REPORTED FAIL: Pitch Curve labels disappear when clicking controls.
+  The custom graph now calls `CDrawContext::setFont(kNormalFontSmall)` for every
+  repaint; title/background and text contrast are also checked. This is a
+  suspected redraw issue and requires real Studio One confirmation.
+- All CTextButtons now have dark text on light default idle gradients and
+  light text on highlighted gradients, instead of unreadable light-on-light.
+- Requirement scope: Key/Scale/Start Mode native VST3 parameters; Length/Range
+  slider+text native automation; three dedicated toggles; zoom, clear,
+  delete, curve shape, snap, previous/next bar, graph zoom, numeric position,
+  numeric pitch, graph left/add/drag/right/delete, 100%/150% zoom.
+- HOST interaction NOT VERIFIED until user confirms physical click, displayed
+  state, MIDI consequence, 100/150% zoom and save/reopen.
+- Build #10 failed the new mouse-event test (uninitialized standalone VSTGUI
+  platform, 6/7 tests passed). Test harness now initializes and exits VSTGUI
+  with the SDK platform lifecycle; do not mark PASS until next CI proves it.
+
+## Native CTextButton regression test (added after Build #10)
+
+Extended `PitchatorParameterFlushTests` executes real VSTGUI MouseDown/Up
+on each of Scale Lock, Loop and Bypass, verifies the controller receives
+click ON and click OFF, and verifies direct setParamNormalized restoration
+is reflected in the button. Also tests that the original BYPASS state from
+the validator is not broken. First run pending.

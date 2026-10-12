@@ -1,10 +1,20 @@
 #include "../src/PitchatorVST.h"
+#include "../src/PitchCurveView.h"
+#include "vstgui/lib/controls/ctextedit.h"
 #include "public.sdk/source/common/memorystream.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
 #include "public.sdk/source/vst/hosting/eventlist.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include <cstdio>
+#include "vstgui/lib/vstguiinit.h"
+#include "vstgui/lib/events.h"
+#include "vstgui/lib/controls/cbuttons.h"
+#include "vstgui/lib/cview.h"
+#include "vstgui/uidescription/uiattributes.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 using namespace Steinberg;
 using namespace Steinberg::Vst;
 
@@ -28,7 +38,8 @@ static bool flushBypass(PitchatorProcessor& processor,ParamValue value){
  data.outputEvents=nullptr;  // crucial: validator flushes with no event list
  return processor.process(data)==kResultOk;
 }
-int main(){
+static int runTests(){
+
  PitchatorProcessor processor;
  PitchatorController controller;
  CHECK(controller.initialize(nullptr)==kResultOk);
@@ -122,7 +133,132 @@ int main(){
  CHECK(routedSaved.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  PitchatorProcessor reopened;
  CHECK(reopened.setState(&routedSaved)==kResultOk);
+ // Real VSTGUI CTextButton left-down / left-up path into controller,
+ // including explicit VST3 edit sequence for ON and OFF.
+ auto checkToggle=[&](ParamID id,bool initial,const char* initialTitle)->bool {
+  auto* toggle=new VSTGUI::CTextButton(VSTGUI::CRect(0,0,120,32),
+                                       nullptr,static_cast<int>(id),
+                                       initialTitle);
+  VSTGUI::UIAttributes attrs;
+  if(controller.verifyView(toggle,attrs,nullptr,nullptr)!=toggle)return false;
+  if(toggle->getListener()!=&controller)return false;
+  if(toggle->getStyle()!=VSTGUI::CTextButton::kOnOffStyle)return false;
+  if((controller.getParamNormalized(id)>=0.5)!=initial)return false;
+  if((toggle->getValueNormalized()>=0.5)!=initial)return false;
+  for(int click=0;click<2;++click){
+   auto down=VSTGUI::MouseDownEvent(VSTGUI::CPoint(28,16),VSTGUI::MouseButton::Left);
+   toggle->onMouseDownEvent(down);
+   if(!down.consumed)return false;
+   auto up=VSTGUI::MouseUpEvent(VSTGUI::CPoint(28,16),VSTGUI::MouseButton::Left);
+   toggle->onMouseUpEvent(up);
+   if(!up.consumed)return false;
+   const bool expected=(click==0)?!initial:initial;
+   if((controller.getParamNormalized(id)>=0.5)!=expected)return false;
+   if((toggle->getValueNormalized()>=0.5)!=expected)return false;
+  }
+  // Automation/restored state must update the toggle without a mouse click.
+  controller.setParamNormalized(id,initial?0.0:1.0);
+  if((toggle->getValueNormalized()>=0.5)==initial)return false;
+  controller.setParamNormalized(id,initial?1.0:0.0);
+  if((toggle->getValueNormalized()>=0.5)!=initial)return false;
+  controller.willClose(nullptr);
+  toggle->forget();
+  return true;
+ };
+ CHECK(checkToggle(kPitchLock,false,"LOCK OFF"));
+ CHECK(checkToggle(kPitchLoop,true,"LOOP ON"));
+ CHECK(checkToggle(kPitchBypass,true,"BYPASS ON"));
+ // Bypass remains ON after previously-verified stored state restore.
+ CHECK(controller.getParamNormalized(kPitchBypass)==1.0);
+
+ // All eight toolbar buttons 900..907: real CTextButton mouse gestures
+ // through verifyView's explicit listener + valueChanged route.
+ VSTGUI::UIAttributes graphAttrs;
+ graphAttrs.setAttribute("pitchator-id","curve");
+ auto* placeholder=new VSTGUI::CView(VSTGUI::CRect(30,248,1170,515));
+ auto* graph=dynamic_cast<pitchator::PitchCurveView*>(
+    controller.verifyView(placeholder,graphAttrs,nullptr,nullptr));
+ CHECK(graph!=nullptr&&graph!=placeholder);
+ placeholder->forget();
+ CHECK(graph->pattern().size()==4);
+ auto click=[&](VSTGUI::CTextButton* b)->bool{
+  auto d=VSTGUI::MouseDownEvent(VSTGUI::CPoint(40,15),VSTGUI::MouseButton::Left);
+  b->onMouseDownEvent(d);
+  if(!d.consumed)return false;
+  auto u=VSTGUI::MouseUpEvent(VSTGUI::CPoint(40,15),VSTGUI::MouseButton::Left);
+  b->onMouseUpEvent(u);
+  return u.consumed;
+ };
+ auto custom=[&](int tag,const char* title){
+  auto* b=new VSTGUI::CTextButton(VSTGUI::CRect(0,0,170,30),
+                                  nullptr,tag,title,
+                                  VSTGUI::CTextButton::kKickStyle);
+  VSTGUI::UIAttributes attrs;
+  controller.verifyView(b,attrs,nullptr,nullptr);
+  return b;
+ };
+ auto* zoom=custom(900,"100 %");
+ CHECK(zoom->getListener()==&controller&&click(zoom));
+ CHECK(zoom->getTitle()=="150 %");
+ auto* shape=custom(903,"CURVE: LINEAR");
+ CHECK(click(shape));
+ CHECK(graph->curve()==pitchator::Curve::Smooth);
+ auto* snap=custom(904,"SNAP ON");
+ CHECK(graph->snap()&&click(snap)&&!graph->snap());
+ auto* graphZoom=custom(907,"GRAPH ZOOM");
+ CHECK(graph->visibleBars()==2&&click(graphZoom)&&graph->visibleBars()==4);
+ auto* next=custom(906,"BAR >");
+ auto* prev=custom(905,"< BAR");
+ CHECK(click(next)&&click(prev));
+ // Clear Pattern always reduces to only immutable point zero.
+ auto* clear=custom(901,"CLEAR PATTERN");
+ CHECK(click(clear)&&graph->pattern().size()==1);
+ // Create a point using actual graph mouse dispatch then delete it.
+ auto add=VSTGUI::MouseDownEvent(VSTGUI::CPoint(280,330),VSTGUI::MouseButton::Left);
+ graph->onMouseDownEvent(add);
+ auto release=VSTGUI::MouseUpEvent(VSTGUI::CPoint(280,330),VSTGUI::MouseButton::Left);
+ graph->onMouseUpEvent(release);
+ CHECK(add.consumed&&release.consumed&&graph->pattern().size()==2);
+ auto* remove=custom(902,"DELETE POINT");
+ CHECK(click(remove)&&graph->pattern().size()==1);
+ // Numeric controls 908 and 909 must link to the same selected GUI point.
+ auto second=VSTGUI::MouseDownEvent(VSTGUI::CPoint(360,360),VSTGUI::MouseButton::Left);
+ graph->onMouseDownEvent(second);
+ auto endSecond=VSTGUI::MouseUpEvent(VSTGUI::CPoint(360,360),VSTGUI::MouseButton::Left);
+ graph->onMouseUpEvent(endSecond);
+ CHECK(graph->pattern().size()==2);
+ auto* posEdit=new VSTGUI::CTextEdit(VSTGUI::CRect(0,0,130,30),nullptr,908);
+ auto* pitchEdit=new VSTGUI::CTextEdit(VSTGUI::CRect(0,0,130,30),nullptr,909);
+ VSTGUI::UIAttributes plain;
+ controller.verifyView(posEdit,plain,nullptr,nullptr);
+ controller.verifyView(pitchEdit,plain,nullptr,nullptr);
+ CHECK(posEdit->getListener()==&controller&&pitchEdit->getListener()==&controller);
+ posEdit->setText(VSTGUI::UTF8String("1.2.120"));
+ controller.valueChanged(posEdit);
+ CHECK(graph->selectedTick()==1080);
+ pitchEdit->setText(VSTGUI::UTF8String("+5,25"));
+ controller.valueChanged(pitchEdit);
+ CHECK(graph->selectedPoint()!=nullptr&&
+       graph->selectedPoint()->semitones==5.25);
+ // Reject a second point at tick zero, keeping the existing curve.
+ posEdit->setText(VSTGUI::UTF8String("1.1.000"));
+ controller.valueChanged(posEdit);
+ CHECK(graph->selectedTick()==1080);
+ controller.willClose(nullptr);
+ zoom->forget();shape->forget();snap->forget();graphZoom->forget();
+ next->forget();prev->forget();clear->forget();remove->forget();
+ posEdit->forget();pitchEdit->forget();graph->forget();
  CHECK(controller.terminate()==kResultOk);
- std::puts("VST3 zero-buffer parameter flush, bypass and preset restore PASS");
+ std::puts("VST3 parameter flush, three mouse toggles, host state and recall PASS");
  return 0;
+}
+int main(){
+#ifdef _WIN32
+ VSTGUI::init(GetModuleHandleW(nullptr));
+#else
+ VSTGUI::init(nullptr);
+#endif
+ const int result=runTests();
+ VSTGUI::exit();
+ return result;
 }

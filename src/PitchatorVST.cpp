@@ -4,6 +4,7 @@
 #include "vstgui/lib/controls/cbuttons.h"
 #include "vstgui/lib/controls/ccontrol.h"
 #include "vstgui/lib/controls/ctextedit.h"
+#include "vstgui/lib/cframe.h"
 #include "PitchPointEdit.h"
 #include <cstring>
 #include "pluginterfaces/base/ibstream.h"
@@ -308,6 +309,7 @@ tresult PLUGIN_API PitchatorController::setComponentState(IBStream* s){
  EditControllerEx1::setParamNormalized(kPitchLoop,static_cast<double>(h.loop));
  EditControllerEx1::setParamNormalized(kPitchBypass,static_cast<double>(h.bypass));
  restoring_=false;
+ syncToggleButtons();
  return kResultOk;
 }
 
@@ -333,6 +335,7 @@ tresult PLUGIN_API PitchatorController::setParamNormalized(ParamID id,ParamValue
   if(curveView_){curveView_->refresh();publishPattern();syncPointEditors();}
  }
  if(id==kPitchRange&&curveView_)curveView_->setRange(discrete(normalized,47)+1);
+ if(id==kPitchLock||id==kPitchLoop||id==kPitchBypass)syncToggleButtons();
  return result;
 }
 IPlugView* PLUGIN_API PitchatorController::createView(FIDString name){
@@ -358,15 +361,34 @@ VSTGUI::CView* PitchatorController::verifyView(
  }
  if(auto* control=dynamic_cast<VSTGUI::CControl*>(view)){
   const int tag=control->getTag();
-  if(tag>=900&&tag<=909){
-   control->setListener(this);
-   if(tag==900)zoomButton_=dynamic_cast<VSTGUI::CTextButton*>(control);
-   if(tag==903)shapeButton_=dynamic_cast<VSTGUI::CTextButton*>(control);
-   if(tag==904)snapButton_=dynamic_cast<VSTGUI::CTextButton*>(control);
-   if(tag==908)positionEdit_=dynamic_cast<VSTGUI::CTextEdit*>(control);
-   if(tag==909)pitchEdit_=dynamic_cast<VSTGUI::CTextEdit*>(control);
-   if(tag==908||tag==909)syncPointEditors();
+  // Registered VST parameters 100..103 and 105 stay on Steinberg's
+  // VST3Editor parameter binding, including menu/text edits/automation.
+  // Three toggles have explicit gesture+host edit routing so they cannot
+  // silently end up as inert CTextButtons on Studio One.
+  const bool toggle=(tag==kPitchLock||tag==kPitchLoop||tag==kPitchBypass);
+  if(toggle||(tag>=900&&tag<=909))control->setListener(this);
+  if(auto* button=dynamic_cast<VSTGUI::CTextButton*>(control)){
+   // VSTGUI CTextButton defaults to KICK style: one mouse click calls
+   // valueChanged(ON) then immediately valueChanged(OFF). This was why
+   // Scale Lock, Loop and Bypass could never remain engaged in Studio One.
+   // They MUST be persistent ON/OFF buttons, whereas action buttons kick.
+   button->setStyle(toggle?VSTGUI::CTextButton::kOnOffStyle:
+                          VSTGUI::CTextButton::kKickStyle);
+   // CTextButton has LIGHT idle gradient by default; the old light text
+   // was practically invisible, especially for ON and disabled states.
+   button->setTextColor(VSTGUI::CColor(20,28,35,255));
+   button->setTextColorHighlighted(VSTGUI::CColor(255,255,255,255));
+   if(tag==kPitchLock)lockButton_=button;
+   if(tag==kPitchLoop)loopButton_=button;
+   if(tag==kPitchBypass)bypassButton_=button;
+   if(tag==900)zoomButton_=button;
+   if(tag==903)shapeButton_=button;
+   if(tag==904)snapButton_=button;
   }
+  if(toggle)syncToggleButtons();
+  if(tag==908)positionEdit_=dynamic_cast<VSTGUI::CTextEdit*>(control);
+  if(tag==909)pitchEdit_=dynamic_cast<VSTGUI::CTextEdit*>(control);
+  if(tag==908||tag==909)syncPointEditors();
  }
  return view;
 }
@@ -374,7 +396,33 @@ void PitchatorController::willClose(VSTGUI::VST3Editor* editor){
  if(editor)zoom_=editor->getZoomFactor();
  activeEditor_=nullptr;curveView_=nullptr;zoomButton_=nullptr;
  shapeButton_=nullptr;snapButton_=nullptr;
+ lockButton_=nullptr;loopButton_=nullptr;bypassButton_=nullptr;
  positionEdit_=nullptr;pitchEdit_=nullptr;
+}
+void PitchatorController::syncToggleButtons(){
+ auto sync=[this](VSTGUI::CTextButton* button,ParamID id,
+                   const char* on,const char* off){
+  if(!button)return;
+  const bool enabled=getParamNormalized(id)>=0.5;
+  button->setValueNormalized(enabled?1.f:0.f);
+  button->setTitle(enabled?on:off);
+  button->invalid();
+ };
+ sync(lockButton_,kPitchLock,"LOCK ON","LOCK OFF");
+ sync(loopButton_,kPitchLoop,"LOOP ON","LOOP OFF");
+ sync(bypassButton_,kPitchBypass,"BYPASS ON","BYPASS OFF");
+}
+void PitchatorController::controlBeginEdit(VSTGUI::CControl* control){
+ if(!control)return;
+ const int tag=control->getTag();
+ if(tag==kPitchLock||tag==kPitchLoop||tag==kPitchBypass)
+  EditControllerEx1::beginEdit(static_cast<ParamID>(tag));
+}
+void PitchatorController::controlEndEdit(VSTGUI::CControl* control){
+ if(!control)return;
+ const int tag=control->getTag();
+ if(tag==kPitchLock||tag==kPitchLoop||tag==kPitchBypass)
+  EditControllerEx1::endEdit(static_cast<ParamID>(tag));
 }
 void PitchatorController::syncPointEditors(){
  if(!curveView_)return;
@@ -392,6 +440,15 @@ void PitchatorController::syncPointEditors(){
 void PitchatorController::valueChanged(VSTGUI::CControl* control){
  if(!control)return;
  const int tag=control->getTag();
+ if(tag==kPitchLock||tag==kPitchLoop||tag==kPitchBypass){
+  // Explicit normalized control -> controller -> host parameter route.
+  // Treat both 0 and 1 as real edits (never ignore the OFF transition).
+  const ParamValue next=control->getValueNormalized()>=0.5?1.0:0.0;
+  EditControllerEx1::setParamNormalized(static_cast<ParamID>(tag),next);
+  EditControllerEx1::performEdit(static_cast<ParamID>(tag),next);
+  syncToggleButtons();
+  return;
+ }
  if(tag==908||tag==909){
   auto* field=dynamic_cast<VSTGUI::CTextEdit*>(control);
   if(!field||!curveView_)return;

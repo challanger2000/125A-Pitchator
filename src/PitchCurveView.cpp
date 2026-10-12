@@ -1,5 +1,6 @@
 #include "PitchCurveView.h"
 #include "vstgui/lib/cdrawcontext.h"
+#include "vstgui/lib/cfont.h"
 #include "vstgui/lib/events.h"
 #include <algorithm>
 #include <cmath>
@@ -47,6 +48,10 @@ double PitchCurveView::yToSemitone(double y) const {
 double PitchCurveView::pointerX(const CPoint& pos) const { return pos.x; }
 double PitchCurveView::pointerY(const CPoint& pos) const { return pos.y; }
 void PitchCurveView::draw(CDrawContext* dc){
+ // Full redraws must initialize the font explicitly. In VSTGUI partial
+ // invalidation the same draw context can inherit a different control's
+ // font or no valid font, causing grid/status text to disappear.
+ dc->setFont(kNormalFontSmall);
  const auto rect=getViewSize();
  dc->setFillColor(kBackground);dc->drawRect(rect,kDrawFilled);
  dc->setFillColor(kPanel);

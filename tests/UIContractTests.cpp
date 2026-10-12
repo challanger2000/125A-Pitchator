@@ -48,6 +48,19 @@ int main(){
  if(instrumentRegistration.find("kVstAudioEffectClass")==std::string::npos ||
     instrumentRegistration.find("Vst::PlugType::kInstrumentSynth")==std::string::npos ||
     instrumentRegistration.find("Fx|Tools")!=std::string::npos)return 12;
+ // Every visible parameter toggle must have a manual edit chain:
+ // listener assignment, gesture begin/perform/end, automation refresh.
+ for(auto id:{"kPitchLock","kPitchLoop","kPitchBypass"}){
+  if(processor.find(std::string("if(tag==")+id+")")==std::string::npos &&
+     processor.find(std::string("tag==")+id)==std::string::npos)return 13;
+ }
+ for(auto route:{"PitchatorController::syncToggleButtons",
+                 "PitchatorController::controlBeginEdit",
+                 "PitchatorController::controlEndEdit",
+                 "EditControllerEx1::performEdit"}){
+  if(processor.find(route)==std::string::npos)return 14;
+ }
+ if(graph.find("dc->setFont(kNormalFontSmall);")==std::string::npos)return 15;
  if(processor.find("publishedCurve_.publish(candidate)")==std::string::npos)return 7;
  std::puts("Pitchator static GUI contract paths present; host clicks NOT VERIFIED");
 }

@@ -1,4 +1,8 @@
 #include "../src/PitchCurveView.h"
+#include "vstgui/lib/vstguiinit.h"
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #include "vstgui/lib/events.h"
 #include <cstdio>
 #include <cmath>
@@ -9,7 +13,8 @@ using namespace VSTGUI;
  std::fprintf(stderr,"CurveMouseEvents line %d: %s\n",__LINE__,#condition); return 1;\
 } } while(0)
 
-int main(){
+static int runTests(){
+
  Pattern curve;CHECK(curve.setBars(2));
  CHECK(curve.upsert({960,3,Curve::Step}));
  CHECK(curve.upsert({1920,1,Curve::Linear}));
@@ -69,4 +74,15 @@ int main(){
  // and VST3Editor zoom: exact same graph control operates at 100/150%.
  CHECK(curve.size()==4);
  std::puts("VSTGUI mouse coordinates, insert, drag, select and delete PASS");
+ return 0;
+}
+int main(){
+#ifdef _WIN32
+ VSTGUI::init(GetModuleHandleW(nullptr));
+#else
+ VSTGUI::init(nullptr);
+#endif
+ const int result=runTests();
+ VSTGUI::exit();
+ return result;
 }

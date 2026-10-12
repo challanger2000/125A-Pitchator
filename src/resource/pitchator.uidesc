@@ -56,9 +56,9 @@
     <view class="CTextEdit" control-tag="Range" origin="647, 39" size="46, 26" back-color="Bg" frame-color="Edge" font-color="Text" font="Small" value-precision="0"/>
     <view class="CTextLabel" origin="710, 9" size="150, 18" title="START MODE" font="Small" font-color="Muted"/>
     <view class="COptionMenu" control-tag="Trigger" origin="710, 36" size="155, 30" font-color="Text" back-color="Bg" frame-color="Edge" menu-popup-style="true"/>
-    <view class="CTextButton" control-tag="Lock" origin="886, 36" size="78, 30" title="SCALE LOCK" text-color="Text" font="Small" frame-color="Edge"/>
-    <view class="CTextButton" control-tag="Loop" origin="974, 36" size="68, 30" title="LOOP" text-color="Text" font="Small" frame-color="Edge"/>
-    <view class="CTextButton" control-tag="Bypass" origin="1053, 36" size="80, 30" title="BYPASS" text-color="Text" font="Small" frame-color="Edge"/>
+    <view class="CTextButton" control-tag="Lock" origin="886, 36" size="78, 30" title="LOCK OFF" text-color="Text" font="Small" frame-color="Edge"/>
+    <view class="CTextButton" control-tag="Loop" origin="974, 36" size="68, 30" title="LOOP ON" text-color="Text" font="Small" frame-color="Edge"/>
+    <view class="CTextButton" control-tag="Bypass" origin="1053, 36" size="80, 30" title="BYPASS OFF" text-color="Text" font="Small" frame-color="Edge"/>
   </view>
   <view class="CTextLabel" origin="36, 219" size="330, 24" title="PITCH CURVE"
    font="Section" font-color="Accent" transparent="true"/>

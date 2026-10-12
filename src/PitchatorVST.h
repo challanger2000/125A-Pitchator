@@ -57,8 +57,11 @@ public:
                            const VSTGUI::IUIDescription*,VSTGUI::VST3Editor*) override;
  void willClose(VSTGUI::VST3Editor*) override;
  void valueChanged(VSTGUI::CControl*) override;
+ void controlBeginEdit(VSTGUI::CControl*) override;
+ void controlEndEdit(VSTGUI::CControl*) override;
  bool publishPattern();
  void syncPointEditors();
+ void syncToggleButtons();
 private:
  pitchator::Pattern guiPattern_{};
  pitchator::PitchCurveView* curveView_=nullptr;
@@ -66,6 +69,9 @@ private:
  VSTGUI::CTextButton* zoomButton_=nullptr;
  VSTGUI::CTextButton* shapeButton_=nullptr;
  VSTGUI::CTextButton* snapButton_=nullptr;
+ VSTGUI::CTextButton* lockButton_=nullptr;
+ VSTGUI::CTextButton* loopButton_=nullptr;
+ VSTGUI::CTextButton* bypassButton_=nullptr;
  VSTGUI::CTextEdit* positionEdit_=nullptr;
  VSTGUI::CTextEdit* pitchEdit_=nullptr;
  bool restoring_=false;
