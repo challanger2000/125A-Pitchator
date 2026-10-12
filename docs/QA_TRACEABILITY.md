@@ -428,3 +428,24 @@ because the new independent ScaleNoteNames header was referenced without
 being included in `tests/ParameterFlushTests.cpp` (MSVC C2039/C3861). The
 missing test-only include is fixed; no engine, GUI or ABI behavior changed.
 The next Windows run must pass all tests before any artifact is offered.
+
+## Build #19: scale note reference full automated QA (2026-10-12)
+
+- Run: https://github.com/challanger2000/125A-Pitchator/actions/runs/38320920647
+- QA-tested commit: `0f2077699e2226782831226725a711a77d58f102`
+- Windows VST3 compiled. **9/9 CTest PASS**, including the 132-key/scale
+  spelling matrix, VST3 controller KEY/SCALE change and project recall
+  regression, geometry and editor/pointer regressions.
+- **47/47 Steinberg Validator PASS**.
+- **28 PASS, 0 WARNING, 0 FAIL** from 125A Plugin Tester (including
+  Editor Lifecycle and MIDI I/O Event probe).
+- Artifact `11778533587`: `125A Pitchator.vst3/Contents/x86_64-win/125A Pitchator.vst3`;
+  ZIP CRC integrity PASS, 6 entries, correct resource paths.
+- Previous failed Build #18 was caused by an integration-test-only omitted
+  header include (C2039/C3861). No MIDI or controller behavior changed for
+  the fix. Build #19 is the verified tested version.
+- KEY/SCALE notes are **informational regardless of SCALE LOCK**; enabling
+  the lock still controls the existing MIDI pitch-bend target quantization.
+- Actions restored to **manual only**; no additional billable CI build.
+- **Studio One human GUI QA OPEN:** verify new note row's legibility at
+  100/150%, changing KEY/SCALE live and project save/reopen. Not FINAL.

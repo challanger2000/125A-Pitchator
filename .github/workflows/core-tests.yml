@@ -1,8 +1,6 @@
 name: Pitchator Windows VST3
 on:
-  # Single batched build to verify scale-note display, integration and release QA.
-  push:
-    branches: [v1.0.0]
+  # Manual-only: conserve 125A Actions minutes; deliberate QA builds only.
   workflow_dispatch:
 permissions:
   contents: read

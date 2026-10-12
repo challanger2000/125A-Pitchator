@@ -173,7 +173,7 @@ suites. CRC verified, no old DLL remains.
 one-bar notes into a downstream synthesizer, project automation/reopen
 and visual GUI acceptance must be checked in the DAW.
 
-## Key/Scale note reference — candidate GUI update
+## Key/Scale note reference — verified Windows Build #19
 
 The settings panel has a read-only, non-interactive `NOTES:` line beneath
 its controls. Choosing **C / Natural Minor** should immediately display
@@ -187,4 +187,11 @@ used (B = German H, B♭ = German B).
 No changes to the audio/MIDI engine, parameter IDs, serialized state or
 runtime allocations within the audio thread. New `ScaleNoteNamesTests`
 checks the complete 12 × 11 Key/Scale matrix against the actual DSP masks.
-**Studio One visual QA not yet completed.**
+**Windows Build #19:** [GitHub Actions PASS](https://github.com/challanger2000/125A-Pitchator/actions/runs/38320920647):
+**9/9 CTest, 47/47 Steinberg Validator, 28/28 125A Plugin Tester**.
+ScaleNoteNamesTests exhaustively verifies all 132 key/mode combinations and
+the VST3 integration test verifies KEY/SCALE state changes and project restore.
+Windows x64 archive `125A Pitchator.vst3` (artifact `11778533587`) was
+downloaded, tested for archive CRC errors and checked for correct DLL filename.
+
+**Studio One visual QA not yet completed.** The software is not labeled FINAL.
