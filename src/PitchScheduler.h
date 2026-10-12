@@ -63,9 +63,10 @@ public:
                                   const Settings& cfg,bool force,Sink sink) noexcept {
   for(int ch=0;ch<16;++ch){
    auto& c=channels_[ch];uint16_t next=8192;
+   double ticks=0;bool running=false;
    if(c.total&&c.pitch>=0&&!cfg.bypass&&std::isfinite(clock.tempo)&&
       clock.tempo>0&&std::isfinite(clock.rate)&&clock.rate>0){
-    double ticks=0;bool running=false;
+
     if(cfg.trigger==TriggerMode::Host){
      if(clock.playing&&clock.valid&&std::isfinite(clock.ppq)){
       ticks=(clock.ppq+offset*clock.tempo/(60.0*clock.rate))*kTicksPerQuarter;
