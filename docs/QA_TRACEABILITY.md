@@ -420,3 +420,11 @@ all 132 key/mode combinations and compares pitch classes to `isInScale`.
 Native controller integration tests cover key/scale edits and recall. New
 line's geometry is checked at 100/150% by UI Layout Tests. Real Studio One
 visualization and refresh **NOT VERIFIED** until physical DAW test.
+
+## CI Build #18 compiler correction (2026-10-12)
+
+Build #18 compiled the main Pitchator VST3 but C++ integration probe failed
+because the new independent ScaleNoteNames header was referenced without
+being included in `tests/ParameterFlushTests.cpp` (MSVC C2039/C3861). The
+missing test-only include is fixed; no engine, GUI or ABI behavior changed.
+The next Windows run must pass all tests before any artifact is offered.

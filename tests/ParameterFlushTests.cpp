@@ -1,4 +1,5 @@
 #include "../src/PitchatorVST.h"
+#include "../src/ScaleNoteNames.h"
 #include "../src/PitchCurveView.h"
 #include "vstgui/lib/controls/ctextedit.h"
 #include "vstgui/lib/controls/ctextlabel.h"
