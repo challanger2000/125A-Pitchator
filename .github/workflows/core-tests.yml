@@ -1,8 +1,6 @@
 name: Pitchator Windows VST3
 on:
-  # One batched build to reproduce/fix Studio One mouse interaction.
-  push:
-    branches: [v1.0.0]
+  # Manual-only release QA. Re-enable push for one explicit bundled verification, if needed.
   workflow_dispatch:
 permissions:
   contents: read

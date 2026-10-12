@@ -37,10 +37,16 @@ prototype artifact uploaded. This is *not* GUI click, Studio One routing,
 - Deterministic regression assertions (run with CMake/CTest).
 - Binding V1 product requirements and end-to-end release QA matrix.
 
-**Still open:** numeric point-position/pitch editor, MIDI event-list integration
-tests, GUI click/lifecycle tests, 125A Plugin Tester, real Studio One acceptance,
-and complete release QA. The original 125A master SVG is included but not
-substituted with a font recreation or an unverified raster conversion. Successful Windows build and Validator are recorded; DAW host QA remains OPEN.
+**Verified in native Windows Build #11:** 7/7 CTest (including VSTGUI
+mouse input, every bottom command, numeric point fields, Scale Lock / Loop /
+Bypass toggles and direct VST3 MIDI event output), 47/47 Steinberg Validator,
+and 125A Plugin Tester 28 PASS / 0 WARN / 0 FAIL including Editor Lifecycle.
+The 125A original master SVG is preserved and the ZIP contains the complete
+VST3 bundle.
+
+**Still open:** actual Studio One mouse/keyboard interaction and label redraw,
+MIDI routing to a real synth, audible musical acceptance, 100/150% scale,
+DAW save/reopen and full final human-host UI audit. DO NOT label FINAL.
 
 ## SDK
 The verified latest stable Steinberg VST3 SDK on 2026-10-12 is
@@ -61,11 +67,10 @@ Read [V1 contract](docs/V1_SPEC.md) and [QA traceability](docs/QA_TRACEABILITY.m
 
 ## Artifact ZIP structure (fix applied after Build #8)
 
-Build #8 passed the technical checks, but the GitHub artifact upload used
-`path: artifact/Pitchator.vst3`, which strips the top-level VST3 bundle
-folder from the artifact ZIP. The next build will upload `path: artifact/`,
-so extracting it produces `Pitchator.vst3/Contents/...` directly. This
-is a packaging correction only; it has not been rebuilt or reverified yet.
+Build #8 used an incorrect artifact path that stripped the enclosing
+`Pitchator.vst3` directory. The path is fixed; downloaded ZIPs from
+Builds #9 and #11 have been verified to include
+`Pitchator.vst3/Contents/...` at the archive root.
 
 ## Windows Build #9: Instrument classification and ZIP corrected
 
@@ -78,3 +83,22 @@ artifact `11767334386` and checking the ZIP directory and embedded
 `moduleinfo.json`. This build passes **6/6 CTest, 47/47 Steinberg
 Validator and 28/28 125A Tester**. Actual Studio One routing and GUI
 mouse interactions must still be tested in the DAW.
+
+## Windows Build #11: direct VSTGUI interaction regression
+
+Validated commit `a2230df10aa7fd35636d26d7fbb9590cdf34f84b`:
+[CI logs](https://github.com/challanger2000/125A-Pitchator/actions/runs/38296952444).
+- **7/7 CTest**, **47/47 Steinberg Validator**, **28/28 125A QA PASS**.
+- Curve view now uses VSTGUI parent-coordinate mouse positions, without
+  accidentally double-transforming them.
+- Scale Lock, Loop and Bypass now have persistent `kOnOffStyle` buttons,
+  explicit MIDI-parameter Begin/Perform/End host edits, visible ON/OFF titles,
+  and sync after automation and saved-state restore. The VSTGUI default
+  `kKickStyle` caused these controls to reset to OFF immediately.
+- All eight bottom commands get actual VSTGUI MouseDown/MouseUp regression
+  coverage; both exact-value fields get controller-route tests.
+- Graph explicitly selects its font on redraw to address intermittent
+  disappearing graph labels; physical Studio One redraw still needs checking.
+- New test artifact ID `11768729087`; full bundle in ZIP.
+
+[125A QA traceability](docs/QA_TRACEABILITY.md) contains host/test limits.

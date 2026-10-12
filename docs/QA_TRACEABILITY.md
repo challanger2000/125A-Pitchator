@@ -249,3 +249,30 @@ on each of Scale Lock, Loop and Bypass, verifies the controller receives
 click ON and click OFF, and verifies direct setParamNormalized restoration
 is reflected in the button. Also tests that the original BYPASS state from
 the validator is not broken. First run pending.
+
+## Build #11 — actual source-level control traceability (2026-10-12)
+
+Workflow: https://github.com/challanger2000/125A-Pitchator/actions/runs/38296952444
+Tested commit: `a2230df10aa7fd35636d26d7fbb9590cdf34f84b`.
+**7/7 CTest PASS, 47/47 Validator PASS, 125A Tester 28 PASS/0 WARN/0 FAIL.**
+Windows x64 VST3 artifact ID `11768729087`; QA report artifact ID
+`11768289214`. Native Editor Lifecycle: 5/5 cycles PASS. Full artifact ZIP
+was independently downloaded and CRC checked, and contains
+`Pitchator.vst3/Contents/x86_64-win/Pitchator.vst3` plus resources.
+
+| Visible UI group | Control-path verification | Host status |
+| --- | --- | --- |
+| Key, Scale, Start Mode | Native VST3Editor parameter tags 100,101,105; scale/trigger processor and MIDI scheduler unit regression | Physical Studio One click NOT VERIFIED |
+| Length/Bend Range sliders and text | Native VST3Editor tags 102/103; controller setParamNormalized -> processor changes -> saved state | Host movement NOT VERIFIED |
+| Scale Lock | Real CTextButton MouseDown/Up -> on/off controller listener -> host begin/perform/end -> param 104 -> processor ScaleLock; automation/reload updates title and value | Native gesture PASS; Studio One NOT VERIFIED |
+| Loop | Real CTextButton MouseDown/Up -> on/off controller listener -> host begin/perform/end -> param 106 -> processor scheduler Loop; automation/reload updates title and value | Native gesture PASS; Studio One NOT VERIFIED |
+| Bypass | Real CTextButton MouseDown/Up -> on/off controller listener -> host begin/perform/end -> param 107 -> processor bypass/center + state recall | Native gesture PASS; Studio One NOT VERIFIED |
+| UI Zoom | Native kick MouseDown/Up -> controller tag 900 -> 100/150 factor + title | Native gesture PASS; Studio One scaling NOT VERIFIED |
+| Clear / Delete | Native kick MouseDown/Up -> tags 901/902 -> Pattern::clear/erase -> publish to processor | Native gesture PASS; Studio One NOT VERIFIED |
+| Curve Shape / Snap | Native kick MouseDown/Up -> tags 903/904 -> Step/Linear/Smooth, 1/32 snap | Native gesture PASS; Studio One NOT VERIFIED |
+| Prev/Next Bar, Graph Zoom | Native kick MouseDown/Up -> tags 905/906/907 -> scroll bars/visible range | Native gesture PASS; Studio One NOT VERIFIED |
+| Position, Pitch | Native numeric controls tags 908/909, validation/edit selected node/reject collision | Controller-route PASS; actual keyboard typing NOT VERIFIED |
+| Graph pointer | Real VSTGUI event simulations: select/add/drag/right-click delete; offset conversion corrected, 0-point immutable | Native gesture PASS; physical Studio One NOT VERIFIED |
+| Graph text redraw | Explicit font state before drawing every frame and corrected idle/active button text colors | Visual Studio One redraw NOT VERIFIED |
+
+The above **does not** claim complete physical DAW interaction or GUI final signoff.
