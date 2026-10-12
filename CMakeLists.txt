@@ -14,6 +14,8 @@ target_compile_definitions(PitchatorUIContractTests PRIVATE
  PITCHATOR_GRAPH_PATH="${CMAKE_SOURCE_DIR}/src/PitchCurveView.cpp")
 add_test(NAME PitchEngineTests COMMAND PitchEngineTests)
 add_test(NAME PitchSchedulerTests COMMAND PitchSchedulerTests)
+add_test(NAME CurveMailboxTests COMMAND CurveMailboxTests)
+add_test(NAME PitchatorUIContractTests COMMAND PitchatorUIContractTests)
 if(PITCHATOR_BUILD_VST3)
  set(SMTG_RUN_VST_VALIDATOR OFF CACHE BOOL "" FORCE)
  set(SMTG_CREATE_PLUGIN_LINK OFF CACHE BOOL "" FORCE)

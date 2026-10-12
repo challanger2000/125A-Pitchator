@@ -38,5 +38,22 @@ int main(){
  s.reset();s.noteOn(0,60,cfg,0);results.clear();
  CHECK(s.render(24000,h,p,cfg,true,sink));h.playing=false;
  CHECK(s.render(24000,h,p,cfg,true,sink));CHECK(results.back().value==8192);
+ // All sixteen channels are independent: no implicit MPE conversion.
+ s.reset();h.playing=true;results.clear();
+ for(int ch=0;ch<16;++ch)s.noteOn(ch,60,cfg,0);
+ CHECK(s.render(24000,h,p,cfg,true,sink));
+ CHECK(results.size()==16);
+ for(int ch=0;ch<16;++ch)CHECK(results[ch].channel==ch);
+ results.clear();
+ for(int ch=0;ch<16;++ch)s.noteOff(ch,60);
+ CHECK(s.render(24000,h,p,cfg,true,sink));
+ CHECK(results.size()==16);
+ for(const auto& b:results)CHECK(b.value==8192);
+ // Receiver rejection must not claim successful bend transmission.
+ s.reset();s.noteOn(0,60,cfg,0);
+ auto refuse=[&](Bend){return false;};
+ CHECK(!s.render(24000,h,p,cfg,true,refuse));
+ results.clear();CHECK(s.render(24000,h,p,cfg,true,sink));
+ CHECK(results.size()==1&&results.front().value==bend14(3,12));
  std::puts("PitchScheduler test PASS");
 }

@@ -23,5 +23,26 @@ int main(){
  Pattern clear;clear.setBars(2);channel.publish(clear);
  TEST(channel.snapshot(snapshot,revision));
  TEST(snapshot.size()==1&&snapshot.bars()==2);
+
+ // Reject malformed packets, ensure failure cannot mutate a valid target.
+ const auto baseline=packCurve(original);
+ Pattern retained=original;
+ auto broken=baseline;
+ broken.count=0;TEST(!unpackCurve(broken,retained));
+ TEST(retained.bars()==16&&retained.size()==3);
+ broken=baseline;broken.bars=17;TEST(!unpackCurve(broken,retained));
+ broken=baseline;broken.points[1].semitones=100;
+ TEST(!unpackCurve(broken,retained));
+ broken=baseline;broken.points[1].tick=-4;
+ TEST(!unpackCurve(broken,retained));
+ broken=baseline;broken.points[0].semitones=1;
+ TEST(!unpackCurve(broken,retained));
+ // A 512-slot snapshot should not lose the first or last point.
+ Pattern full;TEST(full.setBars(16));
+ for(int i=1;i<512;++i)TEST(full.upsert({i*120,((i%17)-8)*0.5,Curve::Linear}));
+ auto filled=packCurve(full);TEST(filled.count==512);
+ Pattern reconstructed;TEST(unpackCurve(filled,reconstructed));
+ TEST(reconstructed.size()==512);
+ TEST(reconstructed.at(511).tick==full.at(511).tick);
  std::puts("CurveMailbox snapshot and packet validation PASS");return 0;
 }
