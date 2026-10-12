@@ -15,7 +15,7 @@ jobs:
       - name: Configure pinned SDK
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
       - name: Build VST3 and Validator
-        run: cmake --build build --config Release --target Pitchator PitchEngineTests PitchSchedulerTests CurveMailboxTests PitchatorUIContractTests validator --parallel
+        run: cmake --build build --config Release --target Pitchator PitchEngineTests PitchSchedulerTests CurveMailboxTests PitchatorUIContractTests PitchatorParameterFlushTests validator --parallel
       - name: Core Tests
         run: ctest --test-dir build -C Release --output-on-failure
       - name: Validate VST3

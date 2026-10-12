@@ -106,7 +106,25 @@ tresult PLUGIN_API PitchatorProcessor::process(ProcessData& d){
    pattern_.setBars(bars);
   }
  }
- if(!d.outputEvents)return kResultOk;
+ // VST3 permits parameter-only flushes with zero samples, no audio buffers
+ // and no event output list. The host uses these flushes for state/preset
+ // persistence (including Steinberg's bypass persistence validator).
+ // Apply the *last* point from each queue before returning.
+ if(!d.outputEvents){
+  if(d.inputParameterChanges){
+   for(int32 i=0;i<d.inputParameterChanges->getParameterCount();++i){
+    auto* q=d.inputParameterChanges->getParameterData(i);
+    if(!q)continue;
+    for(int32 j=0;j<q->getPointCount();++j){
+     int32 at=0;ParamValue x=0;
+     if(q->getPoint(j,at,x)==kResultOk)
+      changeParam(q->getParameterId(),x);
+    }
+   }
+  }
+  scheduler_.endBlock(d.numSamples);
+  return kResultOk;
+ }
  size_t pc=0,ec=0;
  if(d.inputParameterChanges)
   for(int32 i=0;i<d.inputParameterChanges->getParameterCount();++i){
@@ -385,6 +403,7 @@ void PitchatorController::valueChanged(VSTGUI::CControl* control){
 } // namespace Steinberg::Vst
 using namespace Steinberg;
 using namespace Steinberg::Vst;
+#ifndef PITCHATOR_NO_FACTORY
 BEGIN_FACTORY_DEF("125A Systems","https://github.com/challanger2000","")
  DEF_CLASS2(INLINE_UID_FROM_FUID(kPitchProcessorUID),PClassInfo::kManyInstances,
   kVstAudioEffectClass,"125A Pitchator",0,"Fx|Tools","1.0.0",kVstVersionString,
@@ -393,3 +412,5 @@ BEGIN_FACTORY_DEF("125A Systems","https://github.com/challanger2000","")
   kVstComponentControllerClass,"125A Pitchator Controller",0,"","1.0.0",
   kVstVersionString,PitchatorController::createInstance)
 END_FACTORY
+
+#endif // PITCHATOR_NO_FACTORY

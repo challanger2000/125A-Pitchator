@@ -16,6 +16,9 @@ add_test(NAME PitchEngineTests COMMAND PitchEngineTests)
 add_test(NAME PitchSchedulerTests COMMAND PitchSchedulerTests)
 add_test(NAME CurveMailboxTests COMMAND CurveMailboxTests)
 add_test(NAME PitchatorUIContractTests COMMAND PitchatorUIContractTests)
+# VST3 processor/controller integration regression reproduces the
+# Steinberg Validator's zero-buffer BYPASS persistence sequence.
+
 if(PITCHATOR_BUILD_VST3)
  set(SMTG_RUN_VST_VALIDATOR OFF CACHE BOOL "" FORCE)
  set(SMTG_CREATE_PLUGIN_LINK OFF CACHE BOOL "" FORCE)
@@ -39,4 +42,10 @@ if(PITCHATOR_BUILD_VST3)
   target_sources(Pitchator PRIVATE ${vst3sdk_SOURCE_DIR}/public.sdk/source/main/dllmain.cpp)
  endif()
  smtg_target_configure_version_file(Pitchator)
+ add_executable(PitchatorParameterFlushTests tests/ParameterFlushTests.cpp
+  src/PitchatorVST.cpp src/PitchCurveView.cpp)
+ target_compile_definitions(PitchatorParameterFlushTests PRIVATE PITCHATOR_NO_FACTORY=1)
+ target_link_libraries(PitchatorParameterFlushTests PRIVATE sdk sdk_hosting vstgui_support)
+ target_compile_features(PitchatorParameterFlushTests PRIVATE cxx_std_17)
+ add_test(NAME PitchatorParameterFlushTests COMMAND PitchatorParameterFlushTests)
 endif()
