@@ -1,6 +1,8 @@
 name: Pitchator Windows VST3
 on:
-  # Manual-only: do not run expensive Actions on documentation/layout commits.
+  # One bundled native package rename verification.
+  push:
+    branches: [v1.0.0]
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,9 +20,9 @@ jobs:
       - name: Validate VST3
         shell: pwsh
         run: |
-          $bundle = Get-ChildItem build -Directory -Recurse -Filter Pitchator.vst3 | Where-Object { Test-Path (Join-Path $_.FullName "Contents") } | Select-Object -First 1
+          $bundle = Get-ChildItem build -Directory -Recurse -Filter "125A Pitchator.vst3" | Where-Object { Test-Path (Join-Path $_.FullName "Contents") } | Select-Object -First 1
           $validator = Get-ChildItem build -File -Recurse -Filter validator.exe | Select-Object -First 1
-          if (-not $bundle -or -not $validator) { throw "VST3 or validator not found" }
+          if (-not $bundle -or -not $validator) { throw "125A Pitchator.vst3 or validator not found" }
           & $validator.FullName $bundle.FullName
           if ($LASTEXITCODE -ne 0) { throw "Validator failed" }
       - name: Checkout authoritative 125A Plugin Tester Final v0.2.9
@@ -38,7 +40,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $bundle = Get-ChildItem build -Directory -Recurse -Filter Pitchator.vst3 | Where-Object { Test-Path (Join-Path $_.FullName "Contents") } | Select-Object -First 1
+          $bundle = Get-ChildItem build -Directory -Recurse -Filter "125A Pitchator.vst3" | Where-Object { Test-Path (Join-Path $_.FullName "Contents") } | Select-Object -First 1
           $tester = Get-ChildItem tester-build -File -Recurse -Filter 125A_Plugin_Tester.exe | Select-Object -First 1
           if (-not $bundle -or -not $tester) { throw "Missing validated Pitchator bundle or official 125A tester" }
           $env:125A_PLUGIN_TESTER_REPORT_DIR = Join-Path (Get-Location) "qa-reports"
@@ -73,19 +75,22 @@ jobs:
       - name: Stage the exact validated bundle
         shell: pwsh
         run: |
-          $bundle = Get-ChildItem build -Directory -Recurse -Filter Pitchator.vst3 | Where-Object { Test-Path (Join-Path $_.FullName "Contents") } | Select-Object -First 1
-          if (-not $bundle) { throw "Missing VST3" }
+          $bundle = Get-ChildItem build -Directory -Recurse -Filter "125A Pitchator.vst3" | Where-Object { Test-Path (Join-Path $_.FullName "Contents") } | Select-Object -First 1
+          if (-not $bundle) { throw "Missing 125A Pitchator.vst3" }
           New-Item -ItemType Directory -Force -Path artifact | Out-Null
-          Copy-Item $bundle.FullName (Join-Path (Get-Location) "artifact/Pitchator.vst3") -Recurse -Force
-          if (-not (Test-Path "artifact/Pitchator.vst3/Contents")) {
-            throw "Staged ZIP must preserve Pitchator.vst3/Contents structure"
+          Copy-Item $bundle.FullName (Join-Path (Get-Location) "artifact/125A Pitchator.vst3") -Recurse -Force
+          if (Test-Path "artifact/Pitchator.vst3") {
+            throw "Obsolete unbranded Pitchator.vst3 bundle detected"
+          }
+          if (-not (Test-Path "artifact/125A Pitchator.vst3/Contents")) {
+            throw "Staged ZIP must preserve 125A Pitchator.vst3/Contents structure"
           }
       - name: Upload VST3 prototype
         uses: actions/upload-artifact@v5
         with:
           name: Pitchator-Windows-VST3-Prototype
           # Upload the PARENT directory, otherwise GitHub strips the
-          # Pitchator.vst3 bundle folder from the downloaded artifact ZIP.
-          # Correct ZIP structure: Pitchator.vst3/Contents/...
+          # 125A Pitchator.vst3 bundle folder from the downloaded artifact ZIP.
+          # Correct ZIP structure: 125A Pitchator.vst3/Contents/...
           path: artifact/
           if-no-files-found: error

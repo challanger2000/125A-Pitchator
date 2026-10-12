@@ -40,9 +40,16 @@ if(PITCHATOR_BUILD_VST3)
   GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk.git
   GIT_TAG v3.8.1_build_84)
  FetchContent_MakeAvailable(vst3sdk)
- smtg_add_vst3plugin(Pitchator src/PitchatorVST.cpp src/PitchatorVST.h
+ smtg_add_vst3plugin(Pitchator PACKAGE_NAME "125A Pitchator" SOURCES_LIST
+  src/PitchatorVST.cpp src/PitchatorVST.h
   src/PitchCurveView.cpp src/PitchCurveView.h src/BrandLogoView.cpp src/BrandLogoView.h src/CurveMailbox.h
   src/PitchEngine.h src/PitchScheduler.h src/PitchPointEdit.h)
+ # Steinberg SDK owns the actual bundle/binary filename. Do not rename
+ # ZIP contents after the fact: the real package must have the 125A prefix.
+ get_target_property(PITCHATOR_PACKAGE_NAME Pitchator SMTG_PLUGIN_PACKAGE_NAME)
+ if(NOT PITCHATOR_PACKAGE_NAME STREQUAL "125A Pitchator.vst3")
+  message(FATAL_ERROR "Incorrect VST3 package: ${PITCHATOR_PACKAGE_NAME}")
+ endif()
  target_link_libraries(Pitchator PRIVATE sdk vstgui_support)
  target_link_libraries(PitchCurveMouseEventsTests PRIVATE sdk vstgui_support)
  smtg_target_add_plugin_resources(Pitchator

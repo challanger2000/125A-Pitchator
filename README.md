@@ -129,3 +129,20 @@ Prototype ZIP artifact ID `11774014991` contains
 `Pitchator.vst3/Contents/...` at the archive root and passed CRC checks.
 **Real Studio One appearance remains NOT VERIFIED** until user visual
 and mouse interaction acceptance.
+
+## VST3 package display name correction (in progress)
+
+Product/host display name has always been `125A Pitchator`, but the
+Windows VST3 package file remained `Pitchator.vst3`. The build now uses
+the official Steinberg SDK `PACKAGE_NAME "125A Pitchator"` so the **actual
+bundle and embedded Windows VST3 module** are both named
+`125A Pitchator.vst3`. The CI pipeline searches for that exact path,
+rejects the old unbranded bundle and stages the true SDK output.
+
+Current **MIDI NOTE** mode intentionally resets the curve to bar 1 at
+*every NoteOn event*, including overlapping same-channel notes (the pitch
+bend is channel-wide, not MPE). **HOST SYNC** uses ongoing DAW timeline
+phase and does not retrigger the curve at each NoteOn. No MIDI or state
+semantics changed in the package-name correction.
+
+The new output must pass Windows CI/validator/125A Tester before download.

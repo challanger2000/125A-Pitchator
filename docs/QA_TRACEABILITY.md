@@ -325,3 +325,20 @@ Rebuilt 1200x620 GUI grid from user's Studio One screenshot:
   100/150% zoom, physical mouse hitboxes and musical MIDI playback in host.
 
 Automatic CI trigger restored to **workflow_dispatch only**.
+
+## SDK package naming + Note-On retrigger semantics (2026-10-13)
+
+- Studio One user confirms mismatch: VST3 bundle was
+  `Pitchator.vst3`, desired `125A Pitchator.vst3`.
+- Updated SDK `smtg_add_vst3plugin(Pitchator PACKAGE_NAME "125A Pitchator"
+  SOURCES_LIST ...)` and asserted built target's
+  `SMTG_PLUGIN_PACKAGE_NAME == "125A Pitchator.vst3"`.
+- Updated validator, QA, staging and archive paths to require the real
+  SDK output, with a guard against the old `Pitchator.vst3` directory.
+- Host factory Class ID and plugin display name remain unchanged to avoid
+  unnecessary existing-project compatibility changes.
+- Source confirms NOTE Trigger reanchors on **every NoteOn** on that MIDI
+  channel, including overlapping notes. HOST SYNC follows host PPQ and
+  starts each new note at the current curve position; this behavior was
+  in the binding V1 spec and has not been altered.
+- Build/QA on renamed package **PENDING**.
