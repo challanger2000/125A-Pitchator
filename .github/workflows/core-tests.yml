@@ -77,9 +77,15 @@ jobs:
           if (-not $bundle) { throw "Missing VST3" }
           New-Item -ItemType Directory -Force -Path artifact | Out-Null
           Copy-Item $bundle.FullName (Join-Path (Get-Location) "artifact/Pitchator.vst3") -Recurse -Force
+          if (-not (Test-Path "artifact/Pitchator.vst3/Contents")) {
+            throw "Staged ZIP must preserve Pitchator.vst3/Contents structure"
+          }
       - name: Upload VST3 prototype
         uses: actions/upload-artifact@v5
         with:
           name: Pitchator-Windows-VST3-Prototype
-          path: artifact/Pitchator.vst3
+          # Upload the PARENT directory, otherwise GitHub strips the
+          # Pitchator.vst3 bundle folder from the downloaded artifact ZIP.
+          # Correct ZIP structure: Pitchator.vst3/Contents/...
+          path: artifact/
           if-no-files-found: error

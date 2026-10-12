@@ -58,3 +58,11 @@ Develop on the `v1.0.0` branch, leave `main` stable.
 GitHub Actions workflow is **manual-only** to conserve budget.
 
 Read [V1 contract](docs/V1_SPEC.md) and [QA traceability](docs/QA_TRACEABILITY.md).
+
+## Artifact ZIP structure (fix applied after Build #8)
+
+Build #8 passed the technical checks, but the GitHub artifact upload used
+`path: artifact/Pitchator.vst3`, which strips the top-level VST3 bundle
+folder from the artifact ZIP. The next build will upload `path: artifact/`,
+so extracting it produces `Pitchator.vst3/Contents/...` directly. This
+is a packaging correction only; it has not been rebuilt or reverified yet.
