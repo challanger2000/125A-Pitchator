@@ -205,3 +205,16 @@ The same next build also verifies the corrected artifact ZIP structure:
 - Remaining Studio One category scan and MIDI routing checks are
   human-host acceptance gates; **not** asserted from moduleinfo alone.
 - Workflow back to **manual-only**, no Action on documentation update.
+
+## Studio One GUI bug — user report 2026-10-12
+
+The user could not draw/edit curves. Code traced to double-transforming
+the mouse position in `PitchCurveView::pointerX/Y`: the VSTGUI event is
+parent-local already, but code called `frameToLocal()` and added
+`getViewSize().left/top` again. In Studio One the resulting Y coordinate
+lies below the graph's actual hit region. MouseDown was ignored.
+Fix: use VSTGUI parent-local mouse positions unchanged, matching
+`getViewSize()` and drawing coordinates. Add native VSTGUI mouse-event
+regression that asserts click insert, drag, select, right-click delete,
+origin immutability and out-of-bounds rejection at real graph bounds.
+After build, real Studio One physical GUI test remains NOT VERIFIED.

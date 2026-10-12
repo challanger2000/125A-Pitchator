@@ -1,6 +1,8 @@
 name: Pitchator Windows VST3
 on:
-  # Manual only: subsequent edits must not launch another paid Actions run.
+  # One batched build to reproduce/fix Studio One mouse interaction.
+  push:
+    branches: [v1.0.0]
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,7 +14,7 @@ jobs:
       - name: Configure pinned SDK
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
       - name: Build VST3 and Validator
-        run: cmake --build build --config Release --target Pitchator PitchEngineTests PitchSchedulerTests CurveMailboxTests PitchatorUIContractTests PitchatorParameterFlushTests PitchPointEditTests validator --parallel
+        run: cmake --build build --config Release --target Pitchator PitchEngineTests PitchSchedulerTests CurveMailboxTests PitchatorUIContractTests PitchatorParameterFlushTests PitchPointEditTests PitchCurveMouseEventsTests validator --parallel
       - name: Core Tests
         run: ctest --test-dir build -C Release --output-on-failure
       - name: Validate VST3

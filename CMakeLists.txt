@@ -9,6 +9,7 @@ add_executable(PitchSchedulerTests tests/PitchSchedulerTests.cpp)
 add_executable(CurveMailboxTests tests/CurveMailboxTests.cpp)
 add_executable(PitchatorUIContractTests tests/UIContractTests.cpp)
 add_executable(PitchPointEditTests tests/PitchPointEditTests.cpp)
+add_executable(PitchCurveMouseEventsTests tests/CurveMouseEventsTests.cpp src/PitchCurveView.cpp)
 target_compile_definitions(PitchatorUIContractTests PRIVATE
  PITCHATOR_UIDESC_PATH="${CMAKE_SOURCE_DIR}/src/resource/pitchator.uidesc"
  PITCHATOR_SRC_PATH="${CMAKE_SOURCE_DIR}/src/PitchatorVST.cpp"
@@ -18,6 +19,7 @@ add_test(NAME PitchSchedulerTests COMMAND PitchSchedulerTests)
 add_test(NAME CurveMailboxTests COMMAND CurveMailboxTests)
 add_test(NAME PitchatorUIContractTests COMMAND PitchatorUIContractTests)
 add_test(NAME PitchPointEditTests COMMAND PitchPointEditTests)
+add_test(NAME PitchCurveMouseEventsTests COMMAND PitchCurveMouseEventsTests)
 # VST3 processor/controller integration regression reproduces the
 # Steinberg Validator's zero-buffer BYPASS persistence sequence.
 
@@ -36,6 +38,7 @@ if(PITCHATOR_BUILD_VST3)
   src/PitchCurveView.cpp src/PitchCurveView.h src/CurveMailbox.h
   src/PitchEngine.h src/PitchScheduler.h src/PitchPointEdit.h)
  target_link_libraries(Pitchator PRIVATE sdk vstgui_support)
+ target_link_libraries(PitchCurveMouseEventsTests PRIVATE sdk vstgui_support)
  smtg_target_add_plugin_resources(Pitchator
   RESOURCES src/resource/pitchator.uidesc
             src/resource/125A_Logo_Master_FINAL.svg)

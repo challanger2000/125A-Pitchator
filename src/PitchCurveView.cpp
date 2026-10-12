@@ -39,14 +39,13 @@ double PitchCurveView::yToSemitone(double y) const {
  // Vertical grid intentionally has integer semitone precision in V1.
  return std::round(std::clamp(p,-static_cast<double>(pitchRange_),static_cast<double>(pitchRange_)));
 }
-double PitchCurveView::pointerX(const CPoint& pos) const {
- CPoint p=pos;frameToLocal(p);
- return p.x+getViewSize().left;
-}
-double PitchCurveView::pointerY(const CPoint& pos) const {
- CPoint p=pos;frameToLocal(p);
- return p.y+getViewSize().top;
-}
+// VSTGUI CViewContainer has ALREADY converted a mouse event's frame
+// coordinates into this view's PARENT coordinate system before dispatch.
+// getViewSize(), left() and top() are in the SAME parent coordinate system.
+// Calling frameToLocal() here then adding the view origin again double-
+// transforms the pointer (and rejects every click in Studio One).
+double PitchCurveView::pointerX(const CPoint& pos) const { return pos.x; }
+double PitchCurveView::pointerY(const CPoint& pos) const { return pos.y; }
 void PitchCurveView::draw(CDrawContext* dc){
  const auto rect=getViewSize();
  dc->setFillColor(kBackground);dc->drawRect(rect,kDrawFilled);
@@ -100,10 +99,10 @@ void PitchCurveView::draw(CDrawContext* dc){
  const Point* selected=&pattern_.at(0);
  for(size_t i=0;i<pattern_.size();++i)if(pattern_.at(i).tick==selectedTick_){selected=&pattern_.at(i);break;}
  char status[128];
- std::snprintf(status,sizeof(status),"POSITION %d.%d.%d  |  PITCH %+0.1f ST  |  %s  |  %s",
+ std::snprintf(status,sizeof(status),"POSITION %d.%d.%03d  |  PITCH %+0.1f ST  |  %s  |  %s",
   selected->tick/kTicksPerBar+1,
   (selected->tick%kTicksPerBar)/kTicksPerQuarter+1,
-  (selected->tick%kTicksPerQuarter)/120+1,
+  selected->tick%kTicksPerQuarter,
   selected->semitones,
   selected->toNext==Curve::Step?"STEP":selected->toNext==Curve::Smooth?"SMOOTH":"LINEAR",
   snap_?"SNAP ON":"SNAP OFF");
