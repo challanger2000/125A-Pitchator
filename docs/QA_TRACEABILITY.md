@@ -369,3 +369,12 @@ remove speculative right-release deletion and retain native right-button
 **down** handling with 18px hitbox, while explicitly restoring the initial
 BYPASS snapshot before old ON/OFF control checks. Native tests will be
 repeated; do not mark PASS from the failed run.
+
+## Legacy host automation compatibility refinement
+
+The new three-choice trigger list must **not** reinterpret old normalized
+1.0 NOTE RETRIGGER automation as CONTINUE. The final three values are
+HOST SYNC 0, NOTE CONTINUE 0.5, NOTE RETRIGGER 1.0. V1 serialized trigger
+1 is migrated at read time to V2 enum 2. V2 written state values 0/1/2
+retain their new meanings. Unit and VST3 controller migration tests assert
+both the legacy 1.0 and new Continue 0.5 semantics. Await new CI confirmation.

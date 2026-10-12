@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstdint>
 namespace pitchator {
-enum class TriggerMode : int {Host=0,Note=1,Continue=2};
+enum class TriggerMode : int {Host=0,Continue=1,Note=2};
 struct Settings {
  int key=0; Scale scale=Scale::Chromatic; int range=12;
  bool lock=false; TriggerMode trigger=TriggerMode::Host;

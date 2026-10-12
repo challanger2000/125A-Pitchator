@@ -34,10 +34,15 @@ bool readHeader(IBStream* s,Header& h){
  if(!rd(s,magic)||!rd(s,version)||magic!=kPitchMagic||(version!=1&&version!=kPitchStateVersion)||
     !rd(s,h.bars)||!rd(s,h.key)||!rd(s,h.scale)||!rd(s,h.range)||
     !rd(s,h.lock)||!rd(s,h.trigger)||!rd(s,h.loop)||!rd(s,h.bypass)||!rd(s,h.count))return false;
- return h.bars>=1&&h.bars<=16&&h.key>=0&&h.key<=11&&h.scale>=0&&h.scale<=10&&
+ const bool valid=h.bars>=1&&h.bars<=16&&h.key>=0&&h.key<=11&&h.scale>=0&&h.scale<=10&&
  h.range>=1&&h.range<=48&&(h.lock==0||h.lock==1)&&
  (h.trigger>=0&&h.trigger<=(version==1?1:2))&&(h.loop==0||h.loop==1)&&
  (h.bypass==0||h.bypass==1)&&h.count>=1&&h.count<=512;
+ // V1 stored mode 1 as NOTE RETRIGGER, i.e. normalized 1.0.
+ // In V2 this remains the final dropdown choice (2), preserving
+ // legacy automation lanes AND V1 project/component-state data.
+ if(valid&&version==1&&h.trigger==1)h.trigger=2;
+ return valid;
 }
 bool readPattern(IBStream* s,int bars,int count,pitchator::Pattern& p){
  if(!p.setBars(bars))return false;
@@ -288,8 +293,8 @@ tresult PLUGIN_API PitchatorController::initialize(FUnknown* ctx){
   0,1,0,1,ParameterInfo::kCanAutomate));
  auto* trig=new StringListParameter(STR16("Trigger"),kPitchTrigger);
  trig->appendString(STR16("HOST SYNC"));
- trig->appendString(STR16("NOTE RETRIGGER"));
  trig->appendString(STR16("NOTE CONTINUE"));
+ trig->appendString(STR16("NOTE RETRIGGER"));
  parameters.addParameter(trig);
  parameters.addParameter(new RangeParameter(STR16("Loop"),kPitchLoop,nullptr,
   0,1,1,1,ParameterInfo::kCanAutomate));

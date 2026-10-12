@@ -142,8 +142,8 @@ static int runTests(){
  CHECK(routedSaved.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  PitchatorProcessor reopened;
  CHECK(reopened.setState(&routedSaved)==kResultOk);
- // Backward compatibility: V1 state trigger value 1 must still mean
- // NOTE RETRIGGER, whose V2 three-way normalized value is 0.5.
+ // Backward compatibility: V1 trigger 1 and normalized 1.0 must still
+ // represent NOTE RETRIGGER. The new NOTE CONTINUE occupies 0.5.
  auto writeLegacy = [](MemoryStream& stream)->bool{
   auto wr32=[&](uint32 value){
    int32 n=0;
@@ -169,16 +169,16 @@ static int runTests(){
  CHECK(legacyProcessor.setState(&legacy)==kResultOk);
  CHECK(legacy.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&legacy)==kResultOk);
- CHECK(controller.getParamNormalized(kPitchTrigger)==0.5);
- CHECK(controller.setParamNormalized(kPitchTrigger,1.0)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchTrigger)==1.0);
+ CHECK(controller.setParamNormalized(kPitchTrigger,0.5)==kResultOk);
+ CHECK(controller.getParamNormalized(kPitchTrigger)==0.5);
  // We must test saving/restoring the new mode through the real processor
  // rather than assuming that three GUI strings also imply 3-state persistence.
  ParameterChanges triggerChanges(1);
  int32 triggerIndex=0,pointIndex=0;
  auto* triggerQueue=triggerChanges.addParameterData(kPitchTrigger,triggerIndex);
  CHECK(triggerQueue!=nullptr);
- CHECK(triggerQueue->addPoint(0,1.0,pointIndex)==kResultOk);
+ CHECK(triggerQueue->addPoint(0,0.5,pointIndex)==kResultOk);
  ProcessData flush{};flush.numSamples=0;flush.inputParameterChanges=&triggerChanges;
  CHECK(legacyProcessor.process(flush)==kResultOk);
  MemoryStream continueState;
@@ -188,7 +188,7 @@ static int runTests(){
  CHECK(continueRestored.setState(&continueState)==kResultOk);
  CHECK(continueState.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&continueState)==kResultOk);
- CHECK(controller.getParamNormalized(kPitchTrigger)==1.0);
+ CHECK(controller.getParamNormalized(kPitchTrigger)==0.5);
  // The legacy migration probe changed BYPASS to OFF deliberately.
  // Restore the original known ON snapshot before existing button checks.
  CHECK(snapshot.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);

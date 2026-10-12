@@ -76,3 +76,12 @@ centers the bend. Pitch Bend remains MIDI-channel-wide (no MPE). The previous
 saved-state trigger values 0/1 must remain HOST SYNC/NOTE RETRIGGER; new
 states use version 2 and allow value 2 (NOTE CONTINUE). The VST3 parameter
 ID 105 is preserved; its new 3-choice normalization is 0 / 0.5 / 1.
+
+### Compatibility refinement
+
+To retain **old host automation** on ParamID 105, normalized 1.0 must
+continue to mean NOTE RETRIGGER. Therefore the actual V2 menu ordering is
+HOST SYNC (0), NOTE CONTINUE (0.5), NOTE RETRIGGER (1.0). The old raw
+state-v1 trigger 1 migrates to internal state-v2 trigger 2 on read, without
+changing its musical effect. This prevents already saved MIDI NOTE
+host-automation lanes from silently turning into NOTE CONTINUE.
