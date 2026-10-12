@@ -456,7 +456,7 @@ using namespace Steinberg::Vst;
 #ifndef PITCHATOR_NO_FACTORY
 BEGIN_FACTORY_DEF("125A Systems","https://github.com/challanger2000","")
  DEF_CLASS2(INLINE_UID_FROM_FUID(kPitchProcessorUID),PClassInfo::kManyInstances,
-  kVstAudioEffectClass,"125A Pitchator",0,"Fx|Tools","1.0.0",kVstVersionString,
+  kVstAudioEffectClass,"125A Pitchator",Vst::kDistributable,Vst::PlugType::kInstrumentSynth,"1.0.0",kVstVersionString,
   PitchatorProcessor::createInstance)
  DEF_CLASS2(INLINE_UID_FROM_FUID(kPitchControllerUID),PClassInfo::kManyInstances,
   kVstComponentControllerClass,"125A Pitchator Controller",0,"","1.0.0",

@@ -37,6 +37,17 @@ int main(){
  if(graph.find("PitchCurveView::editSelectedTick")==std::string::npos)return 9;
  if(graph.find("PitchCurveView::editSelectedPitch")==std::string::npos)return 10;
 
+ // Guard the VST3 factory metadata: Studio One must list this
+ // MIDI event generator alongside the working 125A Midiator instrument.
+ const auto factory=processor.rfind("BEGIN_FACTORY_DEF");
+ const auto pluginInfo=processor.find("DEF_CLASS2(INLINE_UID_FROM_FUID(kPitchProcessorUID)",factory);
+ const auto controllerInfo=processor.find("DEF_CLASS2(INLINE_UID_FROM_FUID(kPitchControllerUID)",factory);
+ if(factory==std::string::npos||pluginInfo==std::string::npos||
+    controllerInfo==std::string::npos||pluginInfo>=controllerInfo)return 11;
+ const auto instrumentRegistration=processor.substr(pluginInfo,controllerInfo-pluginInfo);
+ if(instrumentRegistration.find("kVstAudioEffectClass")==std::string::npos ||
+    instrumentRegistration.find("Vst::PlugType::kInstrumentSynth")==std::string::npos ||
+    instrumentRegistration.find("Fx|Tools")!=std::string::npos)return 12;
  if(processor.find("publishedCurve_.publish(candidate)")==std::string::npos)return 7;
  std::puts("Pitchator static GUI contract paths present; host clicks NOT VERIFIED");
 }

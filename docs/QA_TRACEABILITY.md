@@ -168,3 +168,21 @@ user's musical approval. The native editor lifecycle probe is real runtime
 evidence, but it is not a Studio One click/interaction test.
 
 **Release status: ENGINEERING TEST CANDIDATE — not Gumroad FINAL.**
+
+## Studio One report — VST3 factory category fix, 2026-10-12
+
+User observed VST3 shown under **FX**, not **Instruments**.
+Code review confirmed `DEF_CLASS2` used `"Fx|Tools"` although the
+125A Midiator registers as `Vst::PlugType::kInstrumentSynth`.
+The Pitchator's class metadata has been changed to match the working
+125A MIDI instrument registration (`Vst::kDistributable` and
+`Vst::PlugType::kInstrumentSynth`), without changing DSP/MIDI
+algorithms, event buses, controller class ID or state format.
+
+The static UI/metadata contract now rejects regression to FX category.
+**Status pending Windows build/Validator/125A Tester**; host classification
+must be independently verified by a fresh Studio One plugin scan.
+Do not mark Studio One Instrument route PASS from metadata alone.
+
+The same next build also verifies the corrected artifact ZIP structure:
+`Pitchator.vst3/Contents/...`.
