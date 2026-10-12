@@ -1,9 +1,6 @@
 name: Pitchator Windows VST3
 on:
-  # One deliberate CI run from the coherent V1 GUI+VST3 batch.
-  push:
-    branches:
-      - v1.0.0
+  # Manual-only after Build #5, to avoid CI on each development commit.
   workflow_dispatch:
 permissions:
   contents: read

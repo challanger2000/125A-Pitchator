@@ -64,3 +64,24 @@ Controller / mailbox / processor C++ routes exist in the development source.
 The static UI contract test checks for matched tags and code paths only.
 **No UI click is considered PASS until actual host events and MIDI effects
 are observed.** The current prototype remains NOT RELEASE READY.
+
+## CI Evidence — 2026-10-12
+
+Build [#5](https://github.com/challanger2000/125A-Pitchator/actions/runs/38253823977)
+for commit `6a39f02da974b96659d00ab320fd3331d35d4a3f`:
+- MSVC Windows x64 Pitchator VST3: **BUILD PASS**
+- `PitchEngineTests`, `PitchSchedulerTests`, `CurveMailboxTests`,
+  `PitchatorUIContractTests`, `PitchatorParameterFlushTests`: **5/5 PASS**
+- Steinberg VST3 Validator: **47/47 PASS** on the built Windows bundle
+- Prototype artifact: **Pitchator-Windows-VST3-Prototype**, artifact ID
+  `11749541953`, archived by GitHub Actions
+- BYPASS persistence defect: FIXED; zero-buffer input parameter queues
+  consumed before the no-outputEvents return. Direct regression reproduces
+  validator preset save, bypass reset and controller restore.
+
+**NOT VERIFIED and still blocking FINAL:** real Studio One MIDI routing and
+actual pitch behavior on a receiving VSTi; 125A Tester; functional GUI
+click/drag/zoom/reopen; every-control state/automation traceability;
+sample-accurate bend curves through transport jumps, host seeking and offline
+rendering; mouse hitboxes at 100/150%; packaging and customer documentation.
+Static UI test is not a substitute for a real host click test.

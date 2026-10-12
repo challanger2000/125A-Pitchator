@@ -13,11 +13,13 @@ trigger, and serializes the curve and parameters in a versioned component state.
 A VSTGUI graphical curve editor prototype has been added: point insertion,
 dragging, removal, Snap, Step/Linear/Smooth, bar scrolling, graph zoom,
 Clear Pattern and UI zoom 100/150%. It publishes validated snapshots
-to the processor. **Real host interaction and build are not yet verified**.
+to the processor. **Windows x64 build, CTest and Steinberg validator are verified; Studio One GUI/MIDI interaction is still unverified**.
 
 See [Native VST3 milestone](docs/NATIVE-VST3-MILESTONE.md) for engineering
-limits and required tests. No successful CI build, validator, GUI or DAW PASS
-is claimed in this commit.
+limits and required tests. Verified CI evidence: [Windows build #5](https://github.com/challanger2000/125A-Pitchator/actions/runs/38253823977),
+commit `6a39f02`: **5/5 CTest PASS, 47/47 Steinberg Validator PASS**,
+prototype artifact uploaded. This is *not* GUI click, Studio One routing,
+125A Plugin Tester, or FINAL evidence.
 
 ## What the first development batch contains
 - Tested-in-source C++17 musical curve engine, point editor data model,
@@ -27,15 +29,14 @@ is claimed in this commit.
 - Binding V1 product requirements and end-to-end release QA matrix.
 
 **Still open:** numeric point-position/pitch editor, MIDI event-list integration
-tests, GUI click/lifecycle tests, Steinberg Validator, real Studio One acceptance,
+tests, GUI click/lifecycle tests, 125A Plugin Tester, real Studio One acceptance,
 and complete release QA. The original 125A master SVG is included but not
-substituted with a font recreation or an unverified raster conversion. No successful build or DAW test is
-claimed until independently observed.
+substituted with a font recreation or an unverified raster conversion. Successful Windows build and Validator are recorded; DAW host QA remains OPEN.
 
 ## SDK
 The verified latest stable Steinberg VST3 SDK on 2026-10-12 is
 **3.8.1**, official tag **v3.8.1_build_84**.
-That tag is recorded in the CMake project and must be used in the upcoming
+That tag is recorded in the CMake project and is used by the existing
 VST3 adapter (with its exact matching submodules).
 No moving SDK master branch.
 

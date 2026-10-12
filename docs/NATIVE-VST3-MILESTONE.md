@@ -46,3 +46,14 @@ UIAttributes::getAttributeValue while only a forward declaration was visible.
 The implementation now explicitly includes the SDK-matched
 `vstgui/uidescription/uiattributes.h`. This is a source correction;
 Windows rebuild, validator, tests and DAW acceptance remain NOT VERIFIED.
+
+## Verified follow-up — Build #5 (2026-10-12)
+
+The original milestone text above is historical. The native VST3 now compiles
+under pinned SDK 3.8.1 with MSVC Windows x64; **5/5 CTest** and **47/47
+Steinberg Validator** tests pass. GitHub Actions run:
+https://github.com/challanger2000/125A-Pitchator/actions/runs/38253823977
+
+The first validator failure was BYPASS preset persistence on a zero-buffer
+parameter-only flush, fixed in commit f2c91e5, directly regression-tested and
+validated in Build #5. No Studio One or 125A Tester sign-off yet.
