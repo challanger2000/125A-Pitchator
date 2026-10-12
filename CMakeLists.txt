@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.25)
+project(OneTwoFiveA_Pitchator VERSION 1.0.0 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# Latest published stable Steinberg release verified 2026-10-12.
+# The VST3 adapter will pin EXACTLY this tag, not moving SDK master.
+set(PITCHATOR_STEINBERG_SDK_TAG "v3.8.1_build_84" CACHE STRING "Pinned Steinberg SDK revision")
+enable_testing()
+add_executable(PitchEngineTests tests/PitchEngineTests.cpp)
+target_include_directories(PitchEngineTests PRIVATE src)
+if(MSVC)
+ target_compile_options(PitchEngineTests PRIVATE /W4)
+else()
+ target_compile_options(PitchEngineTests PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+add_test(NAME PitchEngineTests COMMAND PitchEngineTests)
