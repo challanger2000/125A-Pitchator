@@ -479,3 +479,27 @@ two new state-restore regression probes, exhausting the default Windows
 EXE stack. All Processor test fixtures now live on the heap through RAII
 std::unique_ptr, without changing production allocation or real-time code.
 Full suite, Steinberg and 125A QA remain PENDING after this correction.
+
+## Release-level native QA evidence — dual-point jump Build #23 (2026-10-12)
+
+Actions: https://github.com/challanger2000/125A-Pitchator/actions/runs/38323293624
+QA-tested commit `c1bbd27ea352c5af18b4fd4a3d6835578c41806f`.
+
+- **9/9 CTest PASS**: engine duplicate ticks/zigzag at arbitrary beat,
+  first sample of MIDI discontinuity, PCV1→PCV2 validation and realtime
+  mailbox, two individual GUI dots/Shift+Left/Ctrl+Left/right-delete,
+  project state V1/V2/V3 restore, note names, layouts and action buttons.
+- **47/47 Steinberg Validator PASS** on the fully staged VST3 package.
+- **125A Plugin Tester Final v0.2.9: 28 PASS / 0 WARNING / 0 FAIL**.
+- Five editor lifecycle attach/detach cycles, I/O MIDI event probe PASS.
+- `Pitchator-Windows-VST3-Prototype` artifact ID `11780045698`.
+  Downloaded and independently checked ZIP: 1,644,952 bytes, six files,
+  no CRC errors. Every path starts `125A Pitchator.vst3/`. Main DLL
+  `Contents/x86_64-win/125A Pitchator.vst3` present, old binary name absent.
+  SHA-256 `fad47a917b60b3e5bf45b7d1a2107e01fd86390359d96146fa387d74af516c77`.
+- Automatic Actions push trigger disabled again. **No further build needed
+  for this documentation-only handoff.**
+- **Not yet verified:** physical Studio One mouse gestures, the two dots'
+  visual clarity at 100/150% scale, correct audible instant Pitch Bend
+  through the downstream synth and full save/reopen host automation behavior.
+  These remain user host acceptance gates before FINAL.

@@ -207,3 +207,29 @@ LeftClick** on a knot deletes it without relying on Studio One's right-
 click handling. The old DELETE POINT button remains. Two dots on one
 beat permit sharp zigzag/saw curves. Project state version 3 saves both
 in order and can load old projects. Native host retest is required.
+
+## Verified dual-point zigzag JUMP feature — Windows Build #23
+
+**[QA Windows Build #23](https://github.com/challanger2000/125A-Pitchator/actions/runs/38323293624)**
+commit `c1bbd27ea352c5af18b4fd4a3d6835578c41806f`:
+**9/9 CTest PASS, 47/47 Steinberg Validator PASS, 125A Plugin Tester
+28 PASS / 0 WARNING / 0 FAIL**, including 5 editor lifecycle cycles.
+Correct complete branded Windows x64 artifact ID `11780045698`,
+ZIP CRC PASS with actual VST3 binary
+`125A Pitchator.vst3/Contents/x86_64-win/125A Pitchator.vst3`.
+
+**How to use:** Set LENGTH=2, draw a point +6 at the beginning of BAR 2
+(the end value of BAR 1), select it, then press `JUMP TO 0`. Both blue
+points share *exactly* the same time coordinate. The first is the end of
+the previous ramp and the second is the beginning of the next ramp. Drag
+the lower point vertically for another outgoing value, or Shift+LeftClick
+on an existing knot X to create a jump at the mouse's pitch. Ctrl+LeftClick
+removes a point as an alternative to Studio One's possibly intercepted
+right-click; the existing DELETE POINT button remains usable.
+
+The engine, CurveMailbox PCV2, VST3 state version 3 and the sample-accurate
+bend scheduler all preserve the arrival/departure ordering. V1/V2 state
+compatibility is regression-tested. A new note in NOTE CONTINUE follows
+its existing phrase, so a second one-bar note reaches BAR 2 correctly.
+**Studio One physical GUI and audible synth behavior remain NOT VERIFIED**;
+this is a development test build, not a FINAL Gumroad release.
