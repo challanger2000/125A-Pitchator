@@ -39,7 +39,7 @@ static bool flushBypass(PitchatorProcessor& processor,ParamValue value){
  data.numOutputs=0;
  data.inputParameterChanges=&changes;
  data.outputEvents=nullptr;  // crucial: validator flushes with no event list
- return processor->process(data)==kResultOk;
+ return processor.process(data)==kResultOk;
 }
 static int runTests(){
 
