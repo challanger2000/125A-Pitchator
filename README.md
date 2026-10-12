@@ -20,10 +20,12 @@ to the processor. **Windows x64 build, CTest and Steinberg validator are verifie
 
 See [Native VST3 milestone](docs/NATIVE-VST3-MILESTONE.md) for engineering
 limits and required tests. The newest verified prototype evidence is
-[Windows Build #7](https://github.com/challanger2000/125A-Pitchator/actions/runs/38256289397):
-**6/6 CTest + 47/47 Steinberg Validator PASS**; SDK-based MIDI
-event-list route checks PASS. Artifact `Pitchator-Windows-VST3-Prototype`
-ID `11750955918`. Verified CI evidence: [Windows build #5](https://github.com/challanger2000/125A-Pitchator/actions/runs/38253823977),
+[Windows Build #8](https://github.com/challanger2000/125A-Pitchator/actions/runs/38257844184):
+**6/6 CTest + 47/47 Steinberg Validator + 125A Plugin Tester v0.2.9
+28 PASS / 0 WARN / 0 FAIL**. Native editor lifecycle 5/5 cycles PASS;
+isolated MIDI I/O event probe PASS. Build's Windows artifact ID
+`11751885229`, QA diagnostics artifact ID `11750689704`.
+Not yet Studio One/GUI mouse/zoom tested or Gumroad FINAL. Verified CI evidence: [Windows build #5](https://github.com/challanger2000/125A-Pitchator/actions/runs/38253823977),
 commit `6a39f02`: **5/5 CTest PASS, 47/47 Steinberg Validator PASS**,
 prototype artifact uploaded. This is *not* GUI click, Studio One routing,
 125A Plugin Tester, or FINAL evidence.

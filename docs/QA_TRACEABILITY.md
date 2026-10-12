@@ -137,3 +137,34 @@ Commit: `ec927c590771ce29355e204fe4b80af39f04e2d2`.
 - **NOT YET VERIFIED:** Studio One MIDI routing/receiving synthesizer,
   GUI mouse hitboxes/resize 100%/150%, repeated editor lifecycle,
   125A Tester and full practical release audit. Do not mark FINAL.
+
+## Full automated 125A release QA — Build #8, 2026-10-12
+
+**Run:** https://github.com/challanger2000/125A-Pitchator/actions/runs/38257844184
+
+**Tested commit:** `e15f2554ff4171d1c21e4dce7725d118129d72a8`
+
+The validated Windows x64 VST3 binary from this one run passed:
+- **6/6 CTest PASS**.
+- **47/47 Steinberg VST3 Validator PASS**.
+- **125A Plugin Tester v0.2.9: 28 PASS / 0 WARNING / 0 FAIL**.
+- Native editor lifecycle: **5 full create / attach / runtime / detach /
+  destroy cycles PASS**, according to the 125A Editor Lifecycle Probe.
+- 125A isolated event & I/O probe: **PASS, FirstFailure: None**.
+- Tester also exercised process mode, state recall, parameter automation,
+  processing format, bypass and other built-in release QA gates.
+- Exact validated Windows VST3 ZIP available as Actions artifact:
+  `Pitchator-Windows-VST3-Prototype`, artifact ID `11751885229`.
+- Exact Tester report package:
+  `Pitchator-125A-Release-QA-Diagnostics`, artifact ID `11750689704`.
+- All QA reports archived; none of the automated test results were inferred
+  solely from compiling or static source searches.
+
+**Remaining NON-AUTOMATED gates:** Studio One end-to-end MIDI routing to a
+real receiving VST instrument; real-world audible pitch behavior with
+matching synth bend range; GUI control click/drag feedback, 100/150% visual
+hitboxes and zoom in the DAW, DAW automation/transport and reopen/restore;
+user's musical approval. The native editor lifecycle probe is real runtime
+evidence, but it is not a Studio One click/interaction test.
+
+**Release status: ENGINEERING TEST CANDIDATE — not Gumroad FINAL.**

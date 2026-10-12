@@ -1,8 +1,6 @@
 name: Pitchator Windows VST3
 on:
-  # One bounded integration QA run; restore manual-only in the follow-up audit commit.
-  push:
-    branches: [v1.0.0]
+  # Manual-only CI: source edits do not trigger new paid Actions runs.
   workflow_dispatch:
 permissions:
   contents: read
