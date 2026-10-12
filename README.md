@@ -10,7 +10,10 @@ A native Steinberg VST3 processor/controller **prototype** is staged for the
 v1.0.0 development line. The MIDI scheduler emits 14-bit Pitch Bend as
 LegacyMIDICCOutEvent, forwards source notes, uses host PPQ/tempo or MIDI-Note
 trigger, and serializes the curve and parameters in a versioned component state.
-The full graphical curve editor **is not yet implemented**.
+A VSTGUI graphical curve editor prototype has been added: point insertion,
+dragging, removal, Snap, Step/Linear/Smooth, bar scrolling, graph zoom,
+Clear Pattern and UI zoom 100/150%. It publishes validated snapshots
+to the processor. **Real host interaction and build are not yet verified**.
 
 See [Native VST3 milestone](docs/NATIVE-VST3-MILESTONE.md) for engineering
 limits and required tests. No successful CI build, validator, GUI or DAW PASS
@@ -23,9 +26,10 @@ is claimed in this commit.
 - Deterministic regression assertions (run with CMake/CTest).
 - Binding V1 product requirements and end-to-end release QA matrix.
 
-**Still to develop:** custom graphical editor and controller-to-processor
-point editing, direct event-list integration testing, host validation and
-Studio One acceptance. No successful build or DAW test is
+**Still open:** numeric point-position/pitch editor, MIDI event-list integration
+tests, GUI click/lifecycle tests, Steinberg Validator, real Studio One acceptance,
+and complete release QA. The original 125A master SVG is included but not
+substituted with a font recreation or an unverified raster conversion. No successful build or DAW test is
 claimed until independently observed.
 
 ## SDK

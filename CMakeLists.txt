@@ -6,6 +6,12 @@ option(PITCHATOR_BUILD_VST3 "Compile native Steinberg VST3" ON)
 enable_testing()
 add_executable(PitchEngineTests tests/PitchEngineTests.cpp)
 add_executable(PitchSchedulerTests tests/PitchSchedulerTests.cpp)
+add_executable(CurveMailboxTests tests/CurveMailboxTests.cpp)
+add_executable(PitchatorUIContractTests tests/UIContractTests.cpp)
+target_compile_definitions(PitchatorUIContractTests PRIVATE
+ PITCHATOR_UIDESC_PATH="${CMAKE_SOURCE_DIR}/src/resource/pitchator.uidesc"
+ PITCHATOR_SRC_PATH="${CMAKE_SOURCE_DIR}/src/PitchatorVST.cpp"
+ PITCHATOR_GRAPH_PATH="${CMAKE_SOURCE_DIR}/src/PitchCurveView.cpp")
 add_test(NAME PitchEngineTests COMMAND PitchEngineTests)
 add_test(NAME PitchSchedulerTests COMMAND PitchSchedulerTests)
 if(PITCHATOR_BUILD_VST3)
@@ -20,8 +26,12 @@ if(PITCHATOR_BUILD_VST3)
   GIT_TAG v3.8.1_build_84)
  FetchContent_MakeAvailable(vst3sdk)
  smtg_add_vst3plugin(Pitchator src/PitchatorVST.cpp src/PitchatorVST.h
+  src/PitchCurveView.cpp src/PitchCurveView.h src/CurveMailbox.h
   src/PitchEngine.h src/PitchScheduler.h)
- target_link_libraries(Pitchator PRIVATE sdk)
+ target_link_libraries(Pitchator PRIVATE sdk vstgui_support)
+ smtg_target_add_plugin_resources(Pitchator
+  RESOURCES src/resource/pitchator.uidesc
+            src/resource/125A_Logo_Master_FINAL.svg)
  target_compile_features(Pitchator PRIVATE cxx_std_17)
  if(WIN32)
   target_sources(Pitchator PRIVATE ${vst3sdk_SOURCE_DIR}/public.sdk/source/main/dllmain.cpp)

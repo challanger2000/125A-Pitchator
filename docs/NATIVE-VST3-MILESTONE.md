@@ -6,8 +6,8 @@ Scale Lock, Key, Bend Range, HOST SYNC / NOTE trigger, loop, bypass, and
 versioned VST3 component-state persistence.
 
 ## Scope limits (must not be described as complete)
-- **No custom graphical editor or point-editing UI yet.**
-  The stored starter pattern is fixed unless changed by future GUI/command path.
+- The custom VSTGUI editor and point editing paths have now been implemented
+  in source, but remain uncompiled/unverified pending Windows CI and DAW tests.
 - Timeline uses 4/4. Only target knots are scale-locked.
 - Standard MIDI Pitch Bend is channel-wide; no MPE.
 - Same-channel overlapping note triggers choose the latest note for Scale Lock.
@@ -32,9 +32,8 @@ versioned VST3 component-state persistence.
 ## Next required actions
 1. Compile Windows x64 with MSVC against pinned SDK and inspect real CI logs.
 2. Debug compile/validator and add direct MIDI event-list integration tests.
-3. Construct static GUI from authoritative Branding master and approved assets.
-4. Implement interactive VSTGUI curve editor, signed precise ST readout,
-   graph zoom/scroll/grid, edit gestures and persistence.
+3. Validate the draft VSTGUI custom curve view in Studio One at 100/150%.
+4. Finish numeric time/pitch point entry, GUI polish and graphical control audit.
 5. Add Controller->Processor event/parameter protocol and complete lifecycle,
    automation, state and Studio One end-to-end tests.
 6. Ship only after 125A release gates and user DAW acceptance.

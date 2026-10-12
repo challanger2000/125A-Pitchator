@@ -38,3 +38,29 @@ The following routes are implemented in C++ but not host-verified:
 - Processor component state read/write and Controller setComponentState display.
 - No GUI control inventory yet because no interactive editor is implemented.
 - Lifecycle, host automation, event emission, editor and Studio One tests OPEN.
+
+
+## VSTGUI prototype binding inventory — STATUS: NOT VERIFIED IN HOST
+| Visible control | Tag | Controller / processor route | Evidence required |
+| --- | --- | --- | --- |
+| Key | 100 | Host parameter -> Scale Lock | DAW click, automation, MIDI target |
+| Scale | 101 | Host parameter -> Scale Lock | Mode selection and note target |
+| Length | 102 | Host parameter -> cropped timeline | 1/2/16 bars, event clock |
+| Bend Range | 103 | Host parameter -> 14-bit encoder | Actual MIDI LSB/MSB |
+| Scale Lock | 104 | Host parameter -> snap | Toggle, target pitch |
+| Trigger | 105 | Host parameter -> host/note clock | sample-offset NoteOn |
+| Loop | 106 | Host parameter -> one-shot/loop | MIDI bend and end reset |
+| Bypass | 107 | Host parameter -> 8192 center | On/off, all channels |
+| GUI Zoom | 900 | VST3Editor::setZoomFactor | Real editor attach/resize at 100/150 |
+| Clear Pattern | 901 | CurveView::clearCurve -> message -> mailbox | Clear while stopped, save/reopen |
+| Delete Point | 902 | CurveView::eraseSelected -> message | Last/first point & output |
+| Curve Shape | 903 | CurveView::setCurve -> message | Step/Linear/Smooth output |
+| Snap | 904 | CurveView::setSnap | GUI gesture, snapped tick |
+| Previous/Next | 905/906 | CurveView::scrollBars | 16-bar view and click alignment |
+| Graph Zoom | 907 | CurveView::cycleVisibleBars | Accurate viewport geometry |
+| Curve surface | curve | mouse events -> CurvePacket -> mailbox | add/move/delete, MIDI, state |
+
+Controller / mailbox / processor C++ routes exist in the development source.
+The static UI contract test checks for matched tags and code paths only.
+**No UI click is considered PASS until actual host events and MIDI effects
+are observed.** The current prototype remains NOT RELEASE READY.

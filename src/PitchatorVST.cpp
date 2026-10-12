@@ -1,4 +1,8 @@
 #include "PitchatorVST.h"
+#include "PitchCurveView.h"
+#include "vstgui/lib/controls/cbuttons.h"
+#include "vstgui/lib/controls/ccontrol.h"
+#include <cstring>
 #include "pluginterfaces/base/ibstream.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
 #include "pluginterfaces/vst/ivstparameterchanges.h"
@@ -48,6 +52,7 @@ PitchatorProcessor::PitchatorProcessor(){
  pattern_.upsert({960,3,pitchator::Curve::Step});
  pattern_.upsert({1920,1,pitchator::Curve::Linear});
  pattern_.upsert({2880,0,pitchator::Curve::Linear});
+ publishedCurve_.publish(pattern_);
 }
 tresult PLUGIN_API PitchatorProcessor::initialize(FUnknown* ctx){
  auto r=AudioEffect::initialize(ctx);if(r!=kResultOk)return r;
@@ -68,6 +73,7 @@ void PitchatorProcessor::changeParam(ParamID id,ParamValue x) noexcept {
  case kPitchScale:settings_.scale=static_cast<pitchator::Scale>(discrete(x,10));break;
  case kPitchBars: {
   const int bars=discrete(x,15)+1;
+  currentBars_.store(bars,std::memory_order_relaxed);
   // Shrinking the timeline crops out-of-range points instead of leaving the
   // processor at a different length from its automatable parameter.
   while(!pattern_.setBars(bars)&&pattern_.size()>1){
@@ -85,6 +91,20 @@ void PitchatorProcessor::changeParam(ParamID id,ParamValue x) noexcept {
  }
 }
 tresult PLUGIN_API PitchatorProcessor::process(ProcessData& d){
+ // Atomic publish from GUI; the audio callback NEVER locks or allocates.
+ const uint64_t latest=publishedCurve_.revision();
+ if(latest!=usedCurveRevision_&&!(latest&1u)){
+  pitchator::Pattern fresh;
+  uint64_t observed=0;
+  if(publishedCurve_.snapshot(fresh,observed)){
+   pattern_=fresh;
+   usedCurveRevision_=observed;
+   const int bars=currentBars_.load(std::memory_order_relaxed);
+   while(!pattern_.setBars(bars)&&pattern_.size()>1)
+    pattern_.erase(pattern_.at(pattern_.size()-1).tick);
+   pattern_.setBars(bars);
+  }
+ }
  if(!d.outputEvents)return kResultOk;
  size_t pc=0,ec=0;
  if(d.inputParameterChanges)
@@ -167,14 +187,21 @@ tresult PLUGIN_API PitchatorProcessor::process(ProcessData& d){
 }
 tresult PLUGIN_API PitchatorProcessor::getState(IBStream* s){
  if(!s)return kInvalidArgument;
- Header h{pattern_.bars(),settings_.key,static_cast<int32>(settings_.scale),
+ pitchator::Pattern saved;
+ uint64_t ignored=0;
+ if(!publishedCurve_.snapshot(saved,ignored))return kResultFalse;
+ const int bars=currentBars_.load(std::memory_order_relaxed);
+ while(!saved.setBars(bars)&&saved.size()>1)
+  saved.erase(saved.at(saved.size()-1).tick);
+ if(!saved.setBars(bars))return kResultFalse;
+ Header h{saved.bars(),settings_.key,static_cast<int32>(settings_.scale),
   settings_.range,settings_.lock?1:0,static_cast<int32>(settings_.trigger),
-  settings_.loop?1:0,settings_.bypass?1:0,static_cast<int32>(pattern_.size())};
+  settings_.loop?1:0,settings_.bypass?1:0,static_cast<int32>(saved.size())};
  if(!wr(s,kPitchMagic)||!wr(s,kPitchStateVersion)||!wr(s,h.bars)||!wr(s,h.key)||
     !wr(s,h.scale)||!wr(s,h.range)||!wr(s,h.lock)||!wr(s,h.trigger)||
     !wr(s,h.loop)||!wr(s,h.bypass)||!wr(s,h.count))return kResultFalse;
  for(int32 i=0;i<h.count;++i){
-  const auto& p=pattern_.at(static_cast<size_t>(i));
+  const auto& p=saved.at(static_cast<size_t>(i));
   int32 kind=static_cast<int32>(p.toNext);
   if(!wr(s,p.tick)||!wr(s,p.semitones)||!wr(s,kind))return kResultFalse;
  }
@@ -185,10 +212,38 @@ tresult PLUGIN_API PitchatorProcessor::setState(IBStream* s){
  pitchator::Pattern restored{};
  if(!readPattern(s,h.bars,h.count,restored))return kResultFalse;
  pattern_=restored;
+ publishedCurve_.publish(restored);
+ usedCurveRevision_=0;
+ currentBars_.store(h.bars,std::memory_order_relaxed);
  settings_={h.key,static_cast<pitchator::Scale>(h.scale),h.range,h.lock!=0,
   static_cast<pitchator::TriggerMode>(h.trigger),h.loop!=0,h.bypass!=0};
  scheduler_.reset();previouslyPlaying_=false;
  return kResultOk;
+}
+// VST3 IConnectionPoint messages are delivered on non-realtime threads.
+// Invalid or incomplete snapshots cannot overwrite the last valid curve.
+tresult PLUGIN_API PitchatorProcessor::notify(IMessage* message){
+ if(!message)return kInvalidArgument;
+ if(std::strcmp(message->getMessageID(),"125A.Pitchator.Curve")!=0)
+  return AudioEffect::notify(message);
+ const void* bytes=nullptr;
+ uint32 size=0;
+ auto* attrs=message->getAttributes();
+ if(!attrs||attrs->getBinary("Curve",bytes,size)!=kResultOk||
+    size!=sizeof(pitchator::CurvePacket)||!bytes)return kResultFalse;
+ pitchator::CurvePacket packet{};
+ std::memcpy(&packet,bytes,sizeof(packet));
+ pitchator::Pattern candidate;
+ if(!pitchator::unpackCurve(packet,candidate))return kResultFalse;
+ publishedCurve_.publish(candidate);
+ currentBars_.store(candidate.bars(),std::memory_order_relaxed);
+ return kResultOk;
+}
+PitchatorController::PitchatorController(){
+ guiPattern_.setBars(2);
+ guiPattern_.upsert({960,3,pitchator::Curve::Step});
+ guiPattern_.upsert({1920,1,pitchator::Curve::Linear});
+ guiPattern_.upsert({2880,0,pitchator::Curve::Linear});
 }
 tresult PLUGIN_API PitchatorController::initialize(FUnknown* ctx){
  auto r=EditControllerEx1::initialize(ctx);if(r!=kResultOk)return r;
@@ -220,14 +275,111 @@ tresult PLUGIN_API PitchatorController::initialize(FUnknown* ctx){
 tresult PLUGIN_API PitchatorController::setComponentState(IBStream* s){
  Header h{};if(!readHeader(s,h))return kResultFalse;
  pitchator::Pattern check{};if(!readPattern(s,h.bars,h.count,check))return kResultFalse;
- setParamNormalized(kPitchKey,h.key/11.0);setParamNormalized(kPitchScale,h.scale/10.0);
- setParamNormalized(kPitchBars,(h.bars-1)/15.0);
- setParamNormalized(kPitchRange,(h.range-1)/47.0);
- setParamNormalized(kPitchLock,static_cast<double>(h.lock));
- setParamNormalized(kPitchTrigger,static_cast<double>(h.trigger));
- setParamNormalized(kPitchLoop,static_cast<double>(h.loop));
- setParamNormalized(kPitchBypass,static_cast<double>(h.bypass));
+ restoring_=true;
+ guiPattern_=check;
+ if(curveView_)curveView_->refresh();
+ EditControllerEx1::setParamNormalized(kPitchKey,h.key/11.0);EditControllerEx1::setParamNormalized(kPitchScale,h.scale/10.0);
+ EditControllerEx1::setParamNormalized(kPitchBars,(h.bars-1)/15.0);
+ EditControllerEx1::setParamNormalized(kPitchRange,(h.range-1)/47.0);
+ EditControllerEx1::setParamNormalized(kPitchLock,static_cast<double>(h.lock));
+ EditControllerEx1::setParamNormalized(kPitchTrigger,static_cast<double>(h.trigger));
+ EditControllerEx1::setParamNormalized(kPitchLoop,static_cast<double>(h.loop));
+ EditControllerEx1::setParamNormalized(kPitchBypass,static_cast<double>(h.bypass));
+ restoring_=false;
  return kResultOk;
+}
+
+// GUI lives on the controller thread; no heap work is performed in process().
+bool PitchatorController::publishPattern(){
+ auto* message=allocateMessage();
+ if(!message)return false;
+ message->setMessageID("125A.Pitchator.Curve");
+ const auto packet=pitchator::packCurve(guiPattern_);
+ auto* attrs=message->getAttributes();
+ const bool ok=attrs&&attrs->setBinary("Curve",&packet,
+     static_cast<uint32>(sizeof(packet)))==kResultOk&&sendMessage(message)==kResultOk;
+ message->release();
+ return ok;
+}
+tresult PLUGIN_API PitchatorController::setParamNormalized(ParamID id,ParamValue normalized){
+ const auto result=EditControllerEx1::setParamNormalized(id,normalized);
+ if(id==kPitchBars&&!restoring_){
+  const int bars=discrete(normalized,15)+1;
+  while(!guiPattern_.setBars(bars)&&guiPattern_.size()>1)
+   guiPattern_.erase(guiPattern_.at(guiPattern_.size()-1).tick);
+  guiPattern_.setBars(bars);
+  if(curveView_){curveView_->refresh();publishPattern();}
+ }
+ return result;
+}
+IPlugView* PLUGIN_API PitchatorController::createView(FIDString name){
+ if(!name||std::strcmp(name,ViewType::kEditor)!=0)return nullptr;
+ auto* editor=new VSTGUI::VST3Editor(this,"PitchatorView","pitchator.uidesc");
+ editor->setDelegate(this);
+ editor->setAllowedZoomFactors({1.0,1.5});
+ editor->setZoomFactor(zoom_);
+ return editor;
+}
+VSTGUI::CView* PitchatorController::verifyView(
+          VSTGUI::CView* view,const VSTGUI::UIAttributes& attrs,
+          const VSTGUI::IUIDescription*,VSTGUI::VST3Editor* editor){
+ activeEditor_=editor;
+ if(auto* id=attrs.getAttributeValue("pitchator-id")){
+  if(*id=="curve"){
+   auto* graph=new pitchator::PitchCurveView(view->getViewSize(),guiPattern_,
+                       [this]{return publishPattern();});
+   curveView_=graph;
+   return graph;
+  }
+ }
+ if(auto* control=dynamic_cast<VSTGUI::CControl*>(view)){
+  const int tag=control->getTag();
+  if(tag>=900&&tag<=907){
+   control->setListener(this);
+   if(tag==900)zoomButton_=dynamic_cast<VSTGUI::CTextButton*>(control);
+   if(tag==903)shapeButton_=dynamic_cast<VSTGUI::CTextButton*>(control);
+   if(tag==904)snapButton_=dynamic_cast<VSTGUI::CTextButton*>(control);
+  }
+ }
+ return view;
+}
+void PitchatorController::willClose(VSTGUI::VST3Editor* editor){
+ if(editor)zoom_=editor->getZoomFactor();
+ activeEditor_=nullptr;curveView_=nullptr;zoomButton_=nullptr;
+ shapeButton_=nullptr;snapButton_=nullptr;
+}
+void PitchatorController::valueChanged(VSTGUI::CControl* control){
+ if(!control||control->getValueNormalized()<=0.5f)return;
+ const int tag=control->getTag();
+ if(tag==900){
+  zoom_=zoom_<1.25?1.5:1.0;
+  if(activeEditor_)activeEditor_->setZoomFactor(zoom_);
+  if(zoomButton_)zoomButton_->setTitle(zoom_>1.25?"150 %":"100 %");
+  return;
+ }
+ if(!curveView_)return;
+ switch(tag){
+ case 901:curveView_->clearCurve();break;
+ case 902:curveView_->eraseSelected();break;
+ case 903:{
+  const auto current=curveView_->curve();
+  const auto next=current==pitchator::Curve::Step?pitchator::Curve::Linear:
+                  current==pitchator::Curve::Linear?pitchator::Curve::Smooth:
+                  pitchator::Curve::Step;
+  curveView_->setCurve(next);
+  if(shapeButton_)shapeButton_->setTitle(next==pitchator::Curve::Step?"CURVE: STEP":
+                       next==pitchator::Curve::Smooth?"CURVE: SMOOTH":"CURVE: LINEAR");
+  break;
+ }
+ case 904:
+  curveView_->setSnap(!curveView_->snap());
+  if(snapButton_)snapButton_->setTitle(curveView_->snap()?"SNAP ON":"SNAP OFF");
+  break;
+ case 905:curveView_->scrollBars(-1);break;
+ case 906:curveView_->scrollBars(1);break;
+ case 907:curveView_->cycleVisibleBars();break;
+ default:break;
+ }
 }
 } // namespace Steinberg::Vst
 using namespace Steinberg;
