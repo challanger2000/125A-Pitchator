@@ -1,5 +1,6 @@
 #include "PitchatorVST.h"
 #include "PitchCurveView.h"
+#include "vstgui/uidescription/uiattributes.h"
 #include "vstgui/lib/controls/cbuttons.h"
 #include "vstgui/lib/controls/ccontrol.h"
 #include <cstring>

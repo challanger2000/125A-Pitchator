@@ -37,3 +37,12 @@ versioned VST3 component-state persistence.
 5. Add Controller->Processor event/parameter protocol and complete lifecycle,
    automation, state and Studio One end-to-end tests.
 6. Ship only after 125A release gates and user DAW acceptance.
+
+## CI diagnostic 2026-10-12
+
+First intentional Windows run [38251738035](https://github.com/challanger2000/125A-Pitchator/actions/runs/38251738035):
+SDK configuration PASS. Native build failed because PitchatorVST.cpp called
+UIAttributes::getAttributeValue while only a forward declaration was visible.
+The implementation now explicitly includes the SDK-matched
+`vstgui/uidescription/uiattributes.h`. This is a source correction;
+Windows rebuild, validator, tests and DAW acceptance remain NOT VERIFIED.
