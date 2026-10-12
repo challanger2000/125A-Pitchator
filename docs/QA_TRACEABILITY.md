@@ -103,3 +103,18 @@ Static UI test is not a substitute for a real host click test.
 
 **No FINAL designation until real-editor lifecycle, Studio One and
 125A Tester results are available.**
+
+## Native event-route integration test — added after build #6
+
+`PitchatorParameterFlushTests` now includes a hostless VST3 event-list
+probe using the real SDK `HostMessage`, `EventList`, `ProcessData`
+and `ProcessContext` classes. It sends a full curve packet through
+`IConnectionPoint::notify`, rejects a malformed packet, and asserts
+that a MIDI note on channel 3 with note ID 42 is forwarded unchanged
+while a -3-semitone 14-bit channel pitch bend arrives **before** the
+NoteOn and pitch returns to center **after** NoteOff at the same
+sample position. Also checks serialized/reopened processor state.
+
+This establishes SDK object-level event evidence, but not actual Studio One
+routing or physical GUI click/drag behavior. Status remains pending
+successful Windows CI for this test.
