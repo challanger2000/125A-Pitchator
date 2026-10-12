@@ -23,7 +23,7 @@ inline bool isInScale(Scale s,int offset) noexcept {
  // Masks are in pitch-class order C=bit0 through B=bit11.
  constexpr uint16_t masks[]={
  0x0FFF,0x0AB5,0x05AD,0x09AD,0x0295,0x04A9,
- 0x06AD,0x05AB,0x0ACD,0x06B5,0x055B};
+ 0x06AD,0x05AB,0x0AD5,0x06B5,0x056B};
  return validScale(s) && (masks[static_cast<unsigned>(s)] & (1u<<mod12(offset)))!=0;
 }
 inline double interpolate(double a,double b,double fraction,Curve shape) noexcept {

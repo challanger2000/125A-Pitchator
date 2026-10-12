@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+#include <vector>
 using namespace pitchator;
 static bool near(double a,double b,double tol=1e-9){return std::abs(a-b)<tol;}
 int main(){
@@ -48,6 +49,26 @@ int main(){
  assert(near(snapTarget(-1,60,0,Scale::NaturalMinor),-2)); // B -> Bb
  assert(near(snapTarget(0,61,0,Scale::NaturalMinor),0)); // neutral is neutral
  assert(near(value(p,480,60,0,Scale::Major,false),2)); // unlocked glide
+ // Check the FULL 12-tone membership contract, not just one note per mode.
+ const std::vector<std::vector<int>> expectedNotes={
+  {0,1,2,3,4,5,6,7,8,9,10,11}, // chromatic
+  {0,2,4,5,7,9,11},            // major
+  {0,2,3,5,7,8,10},            // natural minor
+  {0,2,3,5,7,8,11},            // harmonic minor
+  {0,2,4,7,9},                 // major pentatonic
+  {0,3,5,7,10},                // minor pentatonic
+  {0,2,3,5,7,9,10},            // dorian
+  {0,1,3,5,7,8,10},            // phrygian
+  {0,2,4,6,7,9,11},            // lydian
+  {0,2,4,5,7,9,10},            // mixolydian
+  {0,1,3,5,6,8,10}             // locrian
+ };
+ for(size_t s=0;s<expectedNotes.size();++s)
+  for(int n=0;n<12;++n){
+   const auto& allowed=expectedNotes[s];
+   const bool expected=std::find(allowed.begin(),allowed.end(),n)!=allowed.end();
+   assert(isInScale(static_cast<Scale>(s),n)==expected);
+  }
  // MIDI 14-bit encoding, exact central + both endpoints, symmetry contracts.
  assert(bend14(0,12)==8192);
  assert(bend14(-12,12)==0&&bend14(12,12)==16383);
