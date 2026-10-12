@@ -151,12 +151,10 @@ void PitchCurveView::onMouseDownEvent(MouseDownEvent& e){
   const double d=dx*dx+dy*dy;if(d<minDist){minDist=d;nearest=p.tick;}
  }
  if(deleteGesture){
-  rightDownHandled_=true;
   eraseNear(x,y);
   e.consumed=true;return;
  }
  if(!e.buttonState.isLeft())return;
- rightDownHandled_=false;
  if(nearest>=0){selectedTick_=nearest;}
  else{
   auto tick=xToTick(x);
@@ -185,15 +183,6 @@ void PitchCurveView::onMouseMoveEvent(MouseMoveEvent& e){
  e.consumed=true;
 }
 void PitchCurveView::onMouseUpEvent(MouseUpEvent& e){
- // Some platform/host paths deliver a right-click release after the down
- // event was intercepted for context handling. This is a second chance,
- // and never affects other points after a successful down-deletion.
- if(!dragging_&&e.buttonState.isRight()){
-  if(!rightDownHandled_)
-   eraseNear(pointerX(e.mousePosition),pointerY(e.mousePosition));
-  rightDownHandled_=false;
-  e.consumed=true;return;
- }
  if(!dragging_)return;
  dragging_=false;commit();if(selectionChanged_)selectionChanged_();e.consumed=true;
 }

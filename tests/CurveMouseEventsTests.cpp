@@ -60,17 +60,6 @@ static int runTests(){
  view.onMouseDownEvent(del);
  CHECK(del.consumed&&curve.size()==4);
  CHECK(published==2);
- // Some hosts route right mouse UP separately. The fallback must delete
- // an intended point but must NOT delete any unrelated neighboring point.
- auto newDown=MouseDownEvent(CPoint(770,400),MouseButton::Left);
- view.onMouseDownEvent(newDown);
- auto newUp=MouseUpEvent(CPoint(770,400),MouseButton::Left);
- view.onMouseUpEvent(newUp);
- CHECK(curve.size()==5);
- auto deleteUp=MouseUpEvent(CPoint(785,400),MouseButton::Right);
- view.onMouseUpEvent(deleteUp);
- CHECK(deleteUp.consumed&&curve.size()==4);
- CHECK(published==4);
  // Point zero is immutable even when clicked or dragged.
  auto neutral=MouseDownEvent(CPoint(85,376.5),MouseButton::Left);
  view.onMouseDownEvent(neutral);
@@ -96,11 +85,7 @@ static int runTests(){
  CHECK(downDense.consumed&&dense.size()==2);
  auto upDense=MouseUpEvent(CPoint(nearX,376.5),MouseButton::Right);
  denseView.onMouseUpEvent(upDense);
- CHECK(upDense.consumed&&dense.size()==2);
- // A new right-up-only gesture still deletes its nearest point.
- auto releaseDense=MouseUpEvent(CPoint(nearX+17,376.5),MouseButton::Right);
- denseView.onMouseUpEvent(releaseDense);
- CHECK(releaseDense.consumed&&dense.size()==1);
+ CHECK(dense.size()==2); // right-down deletes once; right-up cannot delete another
  std::puts("VSTGUI mouse coordinates, insert, drag, select and delete PASS");
  return 0;
 }

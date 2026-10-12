@@ -358,3 +358,14 @@ Automatic CI trigger restored to **workflow_dispatch only**.
   then create the complete branded directory AND x64 module names in a
   staging step **before** both validators and packaging. Do not claim PASS
   for these changes until the staged VST3 passes all CI/125A checks.
+
+## Build #15 regression findings (2026-10-12)
+
+Build #15 compiled cleanly, but only 6/8 CTest PASS. Failures were
+(1) speculative right-button release-only deletion, which VSTGUI does not
+advertise as a reliable gesture, and (2) the standalone migration test
+left BYPASS off for the following existing ON-state test. Resolution:
+remove speculative right-release deletion and retain native right-button
+**down** handling with 18px hitbox, while explicitly restoring the initial
+BYPASS snapshot before old ON/OFF control checks. Native tests will be
+repeated; do not mark PASS from the failed run.

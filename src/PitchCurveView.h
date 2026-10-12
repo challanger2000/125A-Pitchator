@@ -39,7 +39,6 @@ private:
  std::function<void()> selectionChanged_;
  bool snap_=true;
  bool dragging_=false;
- bool rightDownHandled_=false;
  bool dirty_=false;
  bool syncError_=false;
  int viewBars_=2,scrollBar_=0,pitchRange_=12;

@@ -189,6 +189,11 @@ static int runTests(){
  CHECK(continueState.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&continueState)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchTrigger)==1.0);
+ // The legacy migration probe changed BYPASS to OFF deliberately.
+ // Restore the original known ON snapshot before existing button checks.
+ CHECK(snapshot.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
+ CHECK(controller.setComponentState(&snapshot)==kResultOk);
+ CHECK(controller.getParamNormalized(kPitchBypass)==1.0);
  // Real VSTGUI CTextButton left-down / left-up path into controller,
  // including explicit VST3 edit sequence for ON and OFF.
  auto checkToggle=[&](ParamID id,bool initial,const char* initialTitle)->bool {
