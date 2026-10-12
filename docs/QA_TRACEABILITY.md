@@ -28,3 +28,13 @@ to VST3 validator, 125A tester or Studio One acceptance.
 All GUI controls require a complete UI tag -> input -> controller -> parameter /
 command -> processor -> measured MIDI -> visual feedback -> automation & recall
 chain before V1 can be called finished.
+
+## Native prototype after first VST3 adapter batch
+
+The following routes are implemented in C++ but not host-verified:
+- VST3 NoteOn/NoteOff forwarding and pitch bend output (VST3 build NOT VERIFIED).
+- HOST tempo/PPQ synchronization and NOTE restart (scheduler unit tests defined).
+- 14-bit LSB/MSB mapping, bypass centering, note-off centering.
+- Processor component state read/write and Controller setComponentState display.
+- No GUI control inventory yet because no interactive editor is implemented.
+- Lifecycle, host automation, event emission, editor and Studio One tests OPEN.

@@ -1,4 +1,5 @@
 #include "../src/PitchEngine.h"
+#undef NDEBUG
 #include <cassert>
 #include <cmath>
 #include <cstdint>

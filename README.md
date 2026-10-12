@@ -4,6 +4,18 @@
 an editable 1–16-bar curve. This repository is an early development branch,
 **not** a usable VST3 download or a finished product.
 
+## Current implementation status
+
+A native Steinberg VST3 processor/controller **prototype** is staged for the
+v1.0.0 development line. The MIDI scheduler emits 14-bit Pitch Bend as
+LegacyMIDICCOutEvent, forwards source notes, uses host PPQ/tempo or MIDI-Note
+trigger, and serializes the curve and parameters in a versioned component state.
+The full graphical curve editor **is not yet implemented**.
+
+See [Native VST3 milestone](docs/NATIVE-VST3-MILESTONE.md) for engineering
+limits and required tests. No successful CI build, validator, GUI or DAW PASS
+is claimed in this commit.
+
 ## What the first development batch contains
 - Tested-in-source C++17 musical curve engine, point editor data model,
   Step/Linear/Smooth interpolation and 14-bit MIDI Pitch Bend conversion.
@@ -11,9 +23,9 @@ an editable 1–16-bar curve. This repository is an early development branch,
 - Deterministic regression assertions (run with CMake/CTest).
 - Binding V1 product requirements and end-to-end release QA matrix.
 
-**Still to develop:** MIDI input/output VST3 processor and controller,
-realtime event generation, complete graphical editor, state recall, hosting
-validation and Studio One acceptance. No successful build or DAW test is
+**Still to develop:** custom graphical editor and controller-to-processor
+point editing, direct event-list integration testing, host validation and
+Studio One acceptance. No successful build or DAW test is
 claimed until independently observed.
 
 ## SDK
