@@ -1,8 +1,6 @@
 name: Pitchator Windows VST3
 on:
-  # Exactly one batched classification and packaging verification run.
-  push:
-    branches: [v1.0.0]
+  # Manual only: subsequent edits must not launch another paid Actions run.
   workflow_dispatch:
 permissions:
   contents: read

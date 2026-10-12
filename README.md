@@ -66,3 +66,15 @@ Build #8 passed the technical checks, but the GitHub artifact upload used
 folder from the artifact ZIP. The next build will upload `path: artifact/`,
 so extracting it produces `Pitchator.vst3/Contents/...` directly. This
 is a packaging correction only; it has not been rebuilt or reverified yet.
+
+## Windows Build #9: Instrument classification and ZIP corrected
+
+From 2026-10-12, the VST3 factory exports `Instrument|Synth` (same
+classification convention as 125A Midiator), not `Fx|Tools`. This is
+still a **MIDI-only** instrument utility: no audio synthesis is added.
+The GitHub artifact ZIP includes the actual `Pitchator.vst3` bundle
+directory at the archive root. Verified by independently downloading
+artifact `11767334386` and checking the ZIP directory and embedded
+`moduleinfo.json`. This build passes **6/6 CTest, 47/47 Steinberg
+Validator and 28/28 125A Tester**. Actual Studio One routing and GUI
+mouse interactions must still be tested in the DAW.
