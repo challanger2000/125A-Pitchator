@@ -56,10 +56,21 @@ static int runTests(){
  view.onMouseUpEvent(reup);
  CHECK(reup.consumed);
  // Right-click removes the clicked point, not some offset neighbor.
- auto del=MouseDownEvent(CPoint(950,430),MouseButton::Right);
+ auto del=MouseDownEvent(CPoint(965,430),MouseButton::Right);
  view.onMouseDownEvent(del);
  CHECK(del.consumed&&curve.size()==4);
  CHECK(published==2);
+ // Some hosts route right mouse UP separately. The fallback must delete
+ // an intended point but must NOT delete any unrelated neighboring point.
+ auto newDown=MouseDownEvent(CPoint(770,400),MouseButton::Left);
+ view.onMouseDownEvent(newDown);
+ auto newUp=MouseUpEvent(CPoint(770,400),MouseButton::Left);
+ view.onMouseUpEvent(newUp);
+ CHECK(curve.size()==5);
+ auto deleteUp=MouseUpEvent(CPoint(785,400),MouseButton::Right);
+ view.onMouseUpEvent(deleteUp);
+ CHECK(deleteUp.consumed&&curve.size()==4);
+ CHECK(published==4);
  // Point zero is immutable even when clicked or dragged.
  auto neutral=MouseDownEvent(CPoint(85,376.5),MouseButton::Left);
  view.onMouseDownEvent(neutral);
@@ -73,6 +84,23 @@ static int runTests(){
  // Event coordinates are in logical VSTGUI units independent of OS DPI
  // and VST3Editor zoom: exact same graph control operates at 100/150%.
  CHECK(curve.size()==4);
+ // Right-down + right-up must not delete TWO nearby points.
+ Pattern dense;CHECK(dense.setBars(2));
+ CHECK(dense.upsert({120,0,Curve::Linear}));
+ CHECK(dense.upsert({240,0,Curve::Linear}));
+ PitchCurveView denseView(CRect(30,248,1170,515),dense,
+   []{return true;},[]{});
+ const double nearX=85.0+120.0*1064.0/7680.0;
+ auto downDense=MouseDownEvent(CPoint(nearX,376.5),MouseButton::Right);
+ denseView.onMouseDownEvent(downDense);
+ CHECK(downDense.consumed&&dense.size()==2);
+ auto upDense=MouseUpEvent(CPoint(nearX,376.5),MouseButton::Right);
+ denseView.onMouseUpEvent(upDense);
+ CHECK(upDense.consumed&&dense.size()==2);
+ // A new right-up-only gesture still deletes its nearest point.
+ auto releaseDense=MouseUpEvent(CPoint(nearX+17,376.5),MouseButton::Right);
+ denseView.onMouseUpEvent(releaseDense);
+ CHECK(releaseDense.consumed&&dense.size()==1);
  std::puts("VSTGUI mouse coordinates, insert, drag, select and delete PASS");
  return 0;
 }

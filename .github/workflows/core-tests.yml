@@ -17,10 +17,31 @@ jobs:
         run: cmake --build build --config Release --target Pitchator PitchEngineTests PitchSchedulerTests CurveMailboxTests PitchatorUIContractTests PitchatorParameterFlushTests PitchPointEditTests PitchCurveMouseEventsTests PitchatorUILayoutTests validator --parallel
       - name: Core Tests
         run: ctest --test-dir build -C Release --output-on-failure
+      - name: Stage branded VST3 package before QA
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $raw = Get-ChildItem build -Directory -Recurse -Filter "Pitchator.vst3" |
+            Where-Object { Test-Path (Join-Path $_.FullName "Contents/x86_64-win/Pitchator.vst3") } |
+            Select-Object -First 1
+          if (-not $raw) { throw "SDK Pitchator.vst3 output missing" }
+          New-Item -ItemType Directory -Force artifact | Out-Null
+          $target = Join-Path (Get-Location) "artifact/125A Pitchator.vst3"
+          Copy-Item -LiteralPath $raw.FullName -Destination $target -Recurse -Force
+          $binary = Join-Path $target "Contents/x86_64-win/Pitchator.vst3"
+          if (-not (Test-Path -LiteralPath $binary)) { throw "Staged VST3 DLL missing" }
+          Rename-Item -LiteralPath $binary -NewName "125A Pitchator.vst3"
+          if (-not (Test-Path -LiteralPath (Join-Path $target "Contents/x86_64-win/125A Pitchator.vst3"))) {
+            throw "Branded module rename failed"
+          }
+          if (Test-Path -LiteralPath (Join-Path $target "Contents/x86_64-win/Pitchator.vst3")) {
+            throw "Obsolete unbranded DLL detected"
+          }
+          Write-Host "Staged complete branded 125A Pitchator.vst3 bundle"
       - name: Validate VST3
         shell: pwsh
         run: |
-          $bundle = Get-ChildItem build -Directory -Recurse -Filter "125A Pitchator.vst3" | Where-Object { Test-Path (Join-Path $_.FullName "Contents") } | Select-Object -First 1
+          $bundle = Get-Item -LiteralPath "artifact/125A Pitchator.vst3"
           $validator = Get-ChildItem build -File -Recurse -Filter validator.exe | Select-Object -First 1
           if (-not $bundle -or -not $validator) { throw "125A Pitchator.vst3 or validator not found" }
           & $validator.FullName $bundle.FullName
@@ -40,7 +61,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $bundle = Get-ChildItem build -Directory -Recurse -Filter "125A Pitchator.vst3" | Where-Object { Test-Path (Join-Path $_.FullName "Contents") } | Select-Object -First 1
+          $bundle = Get-Item -LiteralPath "artifact/125A Pitchator.vst3"
           $tester = Get-ChildItem tester-build -File -Recurse -Filter 125A_Plugin_Tester.exe | Select-Object -First 1
           if (-not $bundle -or -not $tester) { throw "Missing validated Pitchator bundle or official 125A tester" }
           $env:125A_PLUGIN_TESTER_REPORT_DIR = Join-Path (Get-Location) "qa-reports"
@@ -72,25 +93,10 @@ jobs:
           name: Pitchator-125A-Release-QA-Diagnostics
           path: qa-reports/**
           if-no-files-found: warn
-      - name: Stage the exact validated bundle
-        shell: pwsh
-        run: |
-          $bundle = Get-ChildItem build -Directory -Recurse -Filter "125A Pitchator.vst3" | Where-Object { Test-Path (Join-Path $_.FullName "Contents") } | Select-Object -First 1
-          if (-not $bundle) { throw "Missing 125A Pitchator.vst3" }
-          New-Item -ItemType Directory -Force -Path artifact | Out-Null
-          Copy-Item $bundle.FullName (Join-Path (Get-Location) "artifact/125A Pitchator.vst3") -Recurse -Force
-          if (Test-Path "artifact/Pitchator.vst3") {
-            throw "Obsolete unbranded Pitchator.vst3 bundle detected"
-          }
-          if (-not (Test-Path "artifact/125A Pitchator.vst3/Contents")) {
-            throw "Staged ZIP must preserve 125A Pitchator.vst3/Contents structure"
-          }
       - name: Upload VST3 prototype
         uses: actions/upload-artifact@v5
         with:
           name: Pitchator-Windows-VST3-Prototype
-          # Upload the PARENT directory, otherwise GitHub strips the
-          # 125A Pitchator.vst3 bundle folder from the downloaded artifact ZIP.
-          # Correct ZIP structure: 125A Pitchator.vst3/Contents/...
+          # GitHub preserves the branded .vst3 folder and matching x64 DLL.
           path: artifact/
           if-no-files-found: error

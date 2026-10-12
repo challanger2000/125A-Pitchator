@@ -40,15 +40,16 @@ if(PITCHATOR_BUILD_VST3)
   GIT_REPOSITORY https://github.com/steinbergmedia/vst3sdk.git
   GIT_TAG v3.8.1_build_84)
  FetchContent_MakeAvailable(vst3sdk)
- smtg_add_vst3plugin(Pitchator PACKAGE_NAME "125A Pitchator" SOURCES_LIST
+ smtg_add_vst3plugin(Pitchator SOURCES_LIST
   src/PitchatorVST.cpp src/PitchatorVST.h
   src/PitchCurveView.cpp src/PitchCurveView.h src/BrandLogoView.cpp src/BrandLogoView.h src/CurveMailbox.h
   src/PitchEngine.h src/PitchScheduler.h src/PitchPointEdit.h)
- # Steinberg SDK owns the actual bundle/binary filename. Do not rename
- # ZIP contents after the fact: the real package must have the 125A prefix.
+ # Steinberg SDK 3.8.1 fails its Windows resource-copy command when
+ # PACKAGE_NAME includes spaces. Compile using the working SDK folder name,
+ # then stage/rename the WHOLE bundle (folder + x64 DLL) for real validation.
  get_target_property(PITCHATOR_PACKAGE_NAME Pitchator SMTG_PLUGIN_PACKAGE_NAME)
- if(NOT PITCHATOR_PACKAGE_NAME STREQUAL "125A Pitchator.vst3")
-  message(FATAL_ERROR "Incorrect VST3 package: ${PITCHATOR_PACKAGE_NAME}")
+ if(NOT PITCHATOR_PACKAGE_NAME STREQUAL "Pitchator.vst3")
+  message(FATAL_ERROR "Unexpected internal SDK package: ${PITCHATOR_PACKAGE_NAME}")
  endif()
  target_link_libraries(Pitchator PRIVATE sdk vstgui_support)
  target_link_libraries(PitchCurveMouseEventsTests PRIVATE sdk vstgui_support)

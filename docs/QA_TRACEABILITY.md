@@ -342,3 +342,19 @@ Automatic CI trigger restored to **workflow_dispatch only**.
   starts each new note at the current curve position; this behavior was
   in the binding V1 spec and has not been altered.
 - Build/QA on renamed package **PENDING**.
+
+## User reports 2026-10-13 — NOTE CONTINUE / right click / package name
+
+- Third Start Mode `NOTE CONTINUE` added after user approved persistent
+  phrase clocks across NoteOn/NoteOff transitions; restart only on next
+  note after 1–16 bars elapsed. Distinct from NOTE RETRIGGER and HOST SYNC.
+- State version 2 writes trigger ID 2; version-1 project states remain
+  compatible and preserve the old 0/1 semantics. Parameter ID 105 unchanged.
+- Node right-click hit radius increased from sqrt(130) ≈11.4px to 18px;
+  regression now right-clicks a point from outside its drawn 6px radius.
+- Earlier native SDK `PACKAGE_NAME \"125A Pitchator\"` caused Windows
+  SDK resource copy failure at build #14: quoted name broken during
+  copy_if_different. Use standard internal `Pitchator.vst3` at build time,
+  then create the complete branded directory AND x64 module names in a
+  staging step **before** both validators and packaging. Do not claim PASS
+  for these changes until the staged VST3 passes all CI/125A checks.

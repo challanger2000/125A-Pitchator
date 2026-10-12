@@ -55,5 +55,40 @@ int main(){
  CHECK(!s.render(24000,h,p,cfg,true,refuse));
  results.clear();CHECK(s.render(24000,h,p,cfg,true,sink));
  CHECK(results.size()==1&&results.front().value==bend14(3,12));
+ // Three trigger contracts. All timestamps use 120 BPM, 48kHz.
+ Pattern phrase;CHECK(phrase.setBars(2));
+ CHECK(phrase.upsert({3840,5.0,Curve::Step})); // BAR 2
+ cfg.trigger=TriggerMode::Continue;cfg.loop=false;
+ s.reset();results.clear();
+ s.noteOn(0,60,cfg,0,h,phrase.lengthTicks());
+ CHECK(s.render(0,h,phrase,cfg,true,sink));
+ s.endBlock(96000); // exactly one 4/4 bar
+ s.noteOff(0,60);
+ CHECK(s.render(0,h,phrase,cfg,true,sink));
+ s.noteOn(0,62,cfg,0,h,phrase.lengthTicks());
+ CHECK(s.render(0,h,phrase,cfg,true,sink));
+ CHECK(results.back().value==bend14(5,12)); // not BAR 1
+ // Note gaps shorter than the phrase must preserve position.
+ s.noteOff(0,62);s.endBlock(24000);
+ s.noteOn(0,65,cfg,0,h,phrase.lengthTicks());
+ CHECK(s.render(0,h,phrase,cfg,true,sink));
+ CHECK(results.back().value==bend14(5,12));
+ // The first note *after* a finished phrase must restart at BAR 1.
+ s.noteOff(0,65);s.endBlock(96000);
+ s.noteOn(0,60,cfg,0,h,phrase.lengthTicks());
+ CHECK(s.render(0,h,phrase,cfg,true,sink));
+ CHECK(results.back().value==8192);
+ // Legacy MIDI NOTE always retriggers even with an existing note.
+ s.reset();results.clear();cfg.trigger=TriggerMode::Note;
+ s.noteOn(0,60,cfg,0,h,phrase.lengthTicks());s.endBlock(96000);
+ s.noteOn(0,62,cfg,0,h,phrase.lengthTicks());
+ CHECK(s.render(0,h,phrase,cfg,true,sink));
+ CHECK(results.empty()); // still at 0 st
+ // HOST SYNC must not retrigger on NoteOn and follows absolute song PPQ.
+ s.reset();results.clear();cfg.trigger=TriggerMode::Host;
+ h.ppq=4; // bar 2
+ s.noteOn(0,60,cfg,0,h,phrase.lengthTicks());
+ CHECK(s.render(0,h,phrase,cfg,true,sink));
+ CHECK(results.back().value==bend14(5,12));
  std::puts("PitchScheduler test PASS");
 }

@@ -18,7 +18,7 @@ enum PitchParam:ParamID {
 static const FUID kPitchProcessorUID(0x125A4501,0x50495443,0x4841544F,0x52010001);
 static const FUID kPitchControllerUID(0x125A4502,0x50495443,0x4841544F,0x52010001);
 constexpr uint32_t kPitchMagic=0x31544350u;
-constexpr uint32_t kPitchStateVersion=1u;
+constexpr uint32_t kPitchStateVersion=2u;
 class PitchatorProcessor final:public AudioEffect {
 public:
  PitchatorProcessor();

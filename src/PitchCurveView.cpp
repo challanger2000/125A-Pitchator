@@ -121,20 +121,42 @@ void PitchCurveView::commit(){
  if(dirty_){syncError_=!publish_();dirty_=false;}
  invalid();
 }
+bool PitchCurveView::eraseNear(double x,double y){
+ if(x<left()-18||x>left()+width()+18||
+    y<top()-18||y>top()+height()+18)return false;
+ int32_t nearest=-1;double distance2=18.0*18.0;
+ for(size_t i=0;i<pattern_.size();++i){
+  const auto& p=pattern_.at(i);
+  if(p.tick==0)continue; // immutable origin, not a user-delete target
+  const double dx=x-tickToX(p.tick),dy=y-semitoneToY(p.semitones);
+  const double d=dx*dx+dy*dy;
+  if(d<distance2){distance2=d;nearest=p.tick;}
+ }
+ if(nearest<=0||!pattern_.erase(nearest))return false;
+ dirty_=true;selectedTick_=0;commit();
+ if(selectionChanged_)selectionChanged_();
+ return true;
+}
 void PitchCurveView::onMouseDownEvent(MouseDownEvent& e){
  const double x=pointerX(e.mousePosition),y=pointerY(e.mousePosition);
  if(x<left()||x>left()+width()||y<top()-10||y>top()+height()+10)return;
- int32_t nearest=-1;double minDist=130.0;
+ int32_t nearest=-1;
+ // A 6px dot is too small for reliable right-click targeting, especially
+ // on a high-DPI display. Use an 18px deletion hit radius for nodes only.
+ const bool deleteGesture=e.buttonState.isRight();
+ double minDist=deleteGesture?18.0*18.0:130.0;
  for(size_t i=0;i<pattern_.size();++i){
   const auto& p=pattern_.at(i);
   const double dx=x-tickToX(p.tick),dy=y-semitoneToY(p.semitones);
   const double d=dx*dx+dy*dy;if(d<minDist){minDist=d;nearest=p.tick;}
  }
- if(e.buttonState.isRight()){
-  if(nearest>0&&pattern_.erase(nearest)){dirty_=true;selectedTick_=0;commit();if(selectionChanged_)selectionChanged_();}
+ if(deleteGesture){
+  rightDownHandled_=true;
+  eraseNear(x,y);
   e.consumed=true;return;
  }
  if(!e.buttonState.isLeft())return;
+ rightDownHandled_=false;
  if(nearest>=0){selectedTick_=nearest;}
  else{
   auto tick=xToTick(x);
@@ -163,6 +185,15 @@ void PitchCurveView::onMouseMoveEvent(MouseMoveEvent& e){
  e.consumed=true;
 }
 void PitchCurveView::onMouseUpEvent(MouseUpEvent& e){
+ // Some platform/host paths deliver a right-click release after the down
+ // event was intercepted for context handling. This is a second chance,
+ // and never affects other points after a successful down-deletion.
+ if(!dragging_&&e.buttonState.isRight()){
+  if(!rightDownHandled_)
+   eraseNear(pointerX(e.mousePosition),pointerY(e.mousePosition));
+  rightDownHandled_=false;
+  e.consumed=true;return;
+ }
  if(!dragging_)return;
  dragging_=false;commit();if(selectionChanged_)selectionChanged_();e.consumed=true;
 }

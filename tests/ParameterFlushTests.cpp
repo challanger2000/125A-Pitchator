@@ -43,6 +43,15 @@ static int runTests(){
  PitchatorProcessor processor;
  PitchatorController controller;
  CHECK(controller.initialize(nullptr)==kResultOk);
+ bool foundThreeTriggers=false;
+ for(int32 i=0;i<controller.getParameterCount();++i){
+  ParameterInfo info{};
+  if(controller.getParameterInfo(i,info)==kResultOk&&info.id==kPitchTrigger){
+   CHECK(info.stepCount==2); // host sees three choices (0, 1, 2)
+   foundThreeTriggers=true;
+  }
+ }
+ CHECK(foundThreeTriggers);
  CHECK(flushBypass(processor,1));
  MemoryStream snapshot;
  CHECK(processor.getState(&snapshot)==kResultOk);
@@ -133,6 +142,53 @@ static int runTests(){
  CHECK(routedSaved.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  PitchatorProcessor reopened;
  CHECK(reopened.setState(&routedSaved)==kResultOk);
+ // Backward compatibility: V1 state trigger value 1 must still mean
+ // NOTE RETRIGGER, whose V2 three-way normalized value is 0.5.
+ auto writeLegacy = [](MemoryStream& stream)->bool{
+  auto wr32=[&](uint32 value){
+   int32 n=0;
+   return stream.write(&value,sizeof(value),&n)==kResultOk&&n==sizeof(value);
+  };
+  auto wrI=[&](int32 value){
+   int32 n=0;
+   return stream.write(&value,sizeof(value),&n)==kResultOk&&n==sizeof(value);
+  };
+  const double semitones=0;
+  int32 bytes=0;
+  return wr32(kPitchMagic)&&wr32(1u)&&
+         wrI(2)&&wrI(0)&&wrI(0)&&wrI(12)&&
+         wrI(0)&&wrI(1)&&wrI(1)&&wrI(0)&&
+         wrI(1)&&wrI(0)&&
+         stream.write(const_cast<double*>(&semitones),sizeof(semitones),&bytes)==kResultOk&&
+         bytes==sizeof(semitones)&&wrI(1);
+ };
+ MemoryStream legacy;
+ CHECK(writeLegacy(legacy));
+ CHECK(legacy.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
+ PitchatorProcessor legacyProcessor;
+ CHECK(legacyProcessor.setState(&legacy)==kResultOk);
+ CHECK(legacy.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
+ CHECK(controller.setComponentState(&legacy)==kResultOk);
+ CHECK(controller.getParamNormalized(kPitchTrigger)==0.5);
+ CHECK(controller.setParamNormalized(kPitchTrigger,1.0)==kResultOk);
+ CHECK(controller.getParamNormalized(kPitchTrigger)==1.0);
+ // We must test saving/restoring the new mode through the real processor
+ // rather than assuming that three GUI strings also imply 3-state persistence.
+ ParameterChanges triggerChanges(1);
+ int32 triggerIndex=0,pointIndex=0;
+ auto* triggerQueue=triggerChanges.addParameterData(kPitchTrigger,triggerIndex);
+ CHECK(triggerQueue!=nullptr);
+ CHECK(triggerQueue->addPoint(0,1.0,pointIndex)==kResultOk);
+ ProcessData flush{};flush.numSamples=0;flush.inputParameterChanges=&triggerChanges;
+ CHECK(legacyProcessor.process(flush)==kResultOk);
+ MemoryStream continueState;
+ CHECK(legacyProcessor.getState(&continueState)==kResultOk);
+ CHECK(continueState.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
+ PitchatorProcessor continueRestored;
+ CHECK(continueRestored.setState(&continueState)==kResultOk);
+ CHECK(continueState.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
+ CHECK(controller.setComponentState(&continueState)==kResultOk);
+ CHECK(controller.getParamNormalized(kPitchTrigger)==1.0);
  // Real VSTGUI CTextButton left-down / left-up path into controller,
  // including explicit VST3 edit sequence for ON and OFF.
  auto checkToggle=[&](ParamID id,bool initial,const char* initialTitle)->bool {

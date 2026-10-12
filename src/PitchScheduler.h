@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstdint>
 namespace pitchator {
-enum class TriggerMode : int {Host,Note};
+enum class TriggerMode : int {Host=0,Note=1,Continue=2};
 struct Settings {
  int key=0; Scale scale=Scale::Chromatic; int range=12;
  bool lock=false; TriggerMode trigger=TriggerMode::Host;
@@ -20,12 +20,21 @@ public:
  void reset() noexcept {channels_={};absoluteSample_=0;}
  int64_t sample()const noexcept{return absoluteSample_;}
  void endBlock(int count) noexcept {if(count>0)absoluteSample_+=count;}
- void noteOn(int ch,int pitch,const Settings& cfg,int offset) noexcept {
+ void noteOn(int ch,int pitch,const Settings& cfg,int offset,
+             const Clock& clock=Clock{},int phraseTicks=2*kTicksPerBar) noexcept {
   if(ch<0||ch>=16||pitch<0||pitch>=128)return;
   auto& c=channels_[ch];
   if(c.held[pitch]<255){++c.held[pitch];++c.total;}
   c.pitch=pitch;
-  if(cfg.trigger==TriggerMode::Note)c.anchor=absoluteSample_+offset;
+  const int64_t now=absoluteSample_+offset;
+  if(cfg.trigger==TriggerMode::Note)c.anchor=now;
+  else if(cfg.trigger==TriggerMode::Continue){
+   // A new note continues the current phrase even across silent note gaps.
+   // Once the configured phrase has elapsed, the NEXT NoteOn restarts it.
+   // Channel-wide pitch bend: all simultaneous notes on this channel share phase.
+   const double elapsed=(now-c.anchor)*clock.tempo*kTicksPerQuarter/(60.0*clock.rate);
+   if(c.anchor<0||!std::isfinite(elapsed)||elapsed>=phraseTicks)c.anchor=now;
+  }
  }
  void noteOff(int ch,int pitch) noexcept {
   if(ch<0||ch>=16||pitch<0||pitch>=128)return;

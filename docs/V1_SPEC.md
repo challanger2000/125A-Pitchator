@@ -63,3 +63,16 @@ supports 1/32 notes (120 ticks), without rounding typed positions.
 Type pitch as signed semitones with decimal dot or German decimal
 comma; all edits reject invalid/out-of-range values, cannot move
 the immutable point 0 or silently replace a point at an occupied time.
+
+## V1 trigger extension: NOTE CONTINUE (2026-10-13)
+
+Start Mode now exposes HOST SYNC / NOTE RETRIGGER / NOTE CONTINUE.
+NOTE RETRIGGER always restarts at Bar 1 on each NoteOn. NOTE CONTINUE starts
+on the first NoteOn and persists its per-channel phrase clock across NoteOffs
+and short rests: a new note at Bar 2 plays Bar 2 of the *same* curve. After
+one full LENGTH has elapsed, the next NoteOn starts a new phrase at Bar 1.
+Loop ON repeats the curve while notes sustain; Loop OFF ends at Length and
+centers the bend. Pitch Bend remains MIDI-channel-wide (no MPE). The previous
+saved-state trigger values 0/1 must remain HOST SYNC/NOTE RETRIGGER; new
+states use version 2 and allow value 2 (NOTE CONTINUE). The VST3 parameter
+ID 105 is preserved; its new 3-choice normalization is 0 / 0.5 / 1.

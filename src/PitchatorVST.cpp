@@ -31,12 +31,12 @@ int discrete(double v,int max){
 struct Header {int32 bars=0,key=0,scale=0,range=0,lock=0,trigger=0,loop=0,bypass=0,count=0;};
 bool readHeader(IBStream* s,Header& h){
  uint32 magic=0,version=0;
- if(!rd(s,magic)||!rd(s,version)||magic!=kPitchMagic||version!=kPitchStateVersion||
+ if(!rd(s,magic)||!rd(s,version)||magic!=kPitchMagic||(version!=1&&version!=kPitchStateVersion)||
     !rd(s,h.bars)||!rd(s,h.key)||!rd(s,h.scale)||!rd(s,h.range)||
     !rd(s,h.lock)||!rd(s,h.trigger)||!rd(s,h.loop)||!rd(s,h.bypass)||!rd(s,h.count))return false;
  return h.bars>=1&&h.bars<=16&&h.key>=0&&h.key<=11&&h.scale>=0&&h.scale<=10&&
  h.range>=1&&h.range<=48&&(h.lock==0||h.lock==1)&&
- (h.trigger==0||h.trigger==1)&&(h.loop==0||h.loop==1)&&
+ (h.trigger>=0&&h.trigger<=(version==1?1:2))&&(h.loop==0||h.loop==1)&&
  (h.bypass==0||h.bypass==1)&&h.count>=1&&h.count<=512;
 }
 bool readPattern(IBStream* s,int bars,int count,pitchator::Pattern& p){
@@ -89,7 +89,7 @@ void PitchatorProcessor::changeParam(ParamID id,ParamValue x) noexcept {
  }
  case kPitchRange:settings_.range=discrete(x,47)+1;break;
  case kPitchLock:settings_.lock=x>=0.5;break;
- case kPitchTrigger:settings_.trigger=x>=0.5?pitchator::TriggerMode::Note:pitchator::TriggerMode::Host;break;
+ case kPitchTrigger:settings_.trigger=static_cast<pitchator::TriggerMode>(discrete(x,2));break;
  case kPitchLoop:settings_.loop=x>=0.5;break;
  case kPitchBypass:settings_.bypass=x>=0.5;break;
  default:break;
@@ -190,7 +190,7 @@ tresult PLUGIN_API PitchatorProcessor::process(ProcessData& d){
    bool isOff=e.type==Event::kNoteOffEvent||
               (e.type==Event::kNoteOnEvent&&e.noteOn.velocity<=0);
    if(isOn){
-    scheduler_.noteOn(e.noteOn.channel,e.noteOn.pitch,settings_,pos);
+    scheduler_.noteOn(e.noteOn.channel,e.noteOn.pitch,settings_,pos,clock,pattern_.lengthTicks());
     if(!scheduler_.render(pos,clock,pattern_,settings_,true,sendBend))return kResultFalse;
    }
    if(d.outputEvents->addEvent(e)!=kResultOk)return kResultFalse;
@@ -287,7 +287,9 @@ tresult PLUGIN_API PitchatorController::initialize(FUnknown* ctx){
  parameters.addParameter(new RangeParameter(STR16("Scale Lock"),kPitchLock,nullptr,
   0,1,0,1,ParameterInfo::kCanAutomate));
  auto* trig=new StringListParameter(STR16("Trigger"),kPitchTrigger);
- trig->appendString(STR16("HOST SYNC"));trig->appendString(STR16("MIDI NOTE"));
+ trig->appendString(STR16("HOST SYNC"));
+ trig->appendString(STR16("NOTE RETRIGGER"));
+ trig->appendString(STR16("NOTE CONTINUE"));
  parameters.addParameter(trig);
  parameters.addParameter(new RangeParameter(STR16("Loop"),kPitchLoop,nullptr,
   0,1,1,1,ParameterInfo::kCanAutomate));
@@ -306,7 +308,7 @@ tresult PLUGIN_API PitchatorController::setComponentState(IBStream* s){
  EditControllerEx1::setParamNormalized(kPitchBars,(h.bars-1)/15.0);
  EditControllerEx1::setParamNormalized(kPitchRange,(h.range-1)/47.0);
  EditControllerEx1::setParamNormalized(kPitchLock,static_cast<double>(h.lock));
- EditControllerEx1::setParamNormalized(kPitchTrigger,static_cast<double>(h.trigger));
+ EditControllerEx1::setParamNormalized(kPitchTrigger,h.trigger/2.0);
  EditControllerEx1::setParamNormalized(kPitchLoop,static_cast<double>(h.loop));
  EditControllerEx1::setParamNormalized(kPitchBypass,static_cast<double>(h.bypass));
  restoring_=false;
