@@ -43,7 +43,8 @@ if(PITCHATOR_BUILD_VST3)
  endif()
  smtg_target_configure_version_file(Pitchator)
  add_executable(PitchatorParameterFlushTests tests/ParameterFlushTests.cpp
-  src/PitchatorVST.cpp src/PitchCurveView.cpp)
+  src/PitchatorVST.cpp src/PitchCurveView.cpp
+  ${vst3sdk_SOURCE_DIR}/public.sdk/source/common/memorystream.cpp)
  target_compile_definitions(PitchatorParameterFlushTests PRIVATE PITCHATOR_NO_FACTORY=1)
  target_link_libraries(PitchatorParameterFlushTests PRIVATE sdk sdk_hosting vstgui_support)
  target_compile_features(PitchatorParameterFlushTests PRIVATE cxx_std_17)
