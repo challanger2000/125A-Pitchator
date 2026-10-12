@@ -366,6 +366,7 @@ VSTGUI::CView* PitchatorController::verifyView(
   if(*id=="logo")return new pitchator::BrandLogoView(view->getViewSize());
   if(*id=="scale-notes"){
    scaleNotesLabel_=dynamic_cast<VSTGUI::CTextLabel*>(view);
+   if(scaleNotesLabel_)scaleNotesLabel_->setMouseEnabled(false);
    syncScaleNotes();
    return view;
   }

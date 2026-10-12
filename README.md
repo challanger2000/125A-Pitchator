@@ -172,3 +172,19 @@ suites. CRC verified, no old DLL remains.
 **Still not FINAL:** Physical right click in Studio One, playback with two
 one-bar notes into a downstream synthesizer, project automation/reopen
 and visual GUI acceptance must be checked in the DAW.
+
+## Key/Scale note reference — candidate GUI update
+
+The settings panel has a read-only, non-interactive `NOTES:` line beneath
+its controls. Choosing **C / Natural Minor** should immediately display
+`C · D · E♭ · F · G · A♭ · B♭`, while C / Harmonic Minor ends on B
+natural. The text is refreshed on KEY or SCALE edits, VST3 host automation,
+project restoration and editor opening, including at 150% zoom. It is a
+scale reference regardless of whether SCALE LOCK is ON; that toggle alone
+controls snapping during MIDI playback. International note nomenclature is
+used (B = German H, B♭ = German B).
+
+No changes to the audio/MIDI engine, parameter IDs, serialized state or
+runtime allocations within the audio thread. New `ScaleNoteNamesTests`
+checks the complete 12 × 11 Key/Scale matrix against the actual DSP masks.
+**Studio One visual QA not yet completed.**

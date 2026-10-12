@@ -201,6 +201,7 @@ static int runTests(){
  noteAttrs.setAttribute("pitchator-id","scale-notes");
  auto* noteLabel=new VSTGUI::CTextLabel(VSTGUI::CRect(40,180,1162,200),"NOTES");
  CHECK(controller.verifyView(noteLabel,noteAttrs,nullptr,nullptr)==noteLabel);
+ CHECK(!noteLabel->getMouseEnabled());
  CHECK(noteLabel->getText()==pitchator::scaleNoteNames(0,pitchator::Scale::Chromatic).c_str());
  CHECK(controller.setParamNormalized(kPitchKey,0.0)==kResultOk);
  CHECK(controller.setParamNormalized(kPitchScale,2.0/10.0)==kResultOk);
