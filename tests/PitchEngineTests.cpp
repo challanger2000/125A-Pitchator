@@ -82,5 +82,43 @@ int main(){
  assert(near(hostTick(-1,120,48000,0,1),2880));
  assert(gridTick(16,4,3)==(16*3840-240));
  assert(gridTick(0,1,0)==-1&&gridTick(1,5,0)==-1);
+ // Same-tick dual knots: end BAR 1 at +6, jump to 0 at BAR 2.
+ Pattern saw;assert(saw.setBars(2));
+ assert(saw.upsert({3840,6,Curve::Linear}));
+ assert(saw.addJump({3840,0,Curve::Linear}));
+ assert(saw.size()==3&&saw.hasJumps());
+ assert(saw.at(1).tick==saw.at(2).tick);
+ assert(near(saw.value(3840),0));
+ assert(saw.value(3839)>5.99&&saw.value(3839)<6.0);
+ assert(near(saw.value(1920),3));
+ assert(!saw.addJump({3840,4,Curve::Linear})); // never three points
+ assert(!saw.addJump({0,3,Curve::Linear})); // immutable origin
+ assert(near(saw.value(3840.01),0));
+ size_t moved=0;
+ assert(saw.moveAt(2,{3840,-3,Curve::Linear},moved));
+ assert(moved==2&&near(saw.value(3840),-3));
+ assert(near(saw.value(3839),saw.value(3839.0)));
+ assert(saw.crossesJump(3839,3840,false));
+ assert(!saw.crossesJump(3840,3850,false));
+ assert(saw.crossesJump(3839,3840,true));
+ assert(saw.crossesJump(11519,11520,true)); // bar 2 in next loop
+ assert(saw.eraseAt(2)&&!saw.hasJumps()&&saw.size()==2);
+ assert(near(saw.value(3840),6));
+ assert(saw.addJump({3840,0,Curve::Smooth}));
+ Pattern swept=saw; // Move a knot onto another to create an intentional pair.
+ assert(swept.upsert({4800,4,Curve::Linear}));
+ size_t newIndex=0;
+ assert(!swept.moveAt(3,{3840,2,Curve::Linear},newIndex)); // no third
+ assert(swept.eraseAt(2));
+ assert(swept.moveAt(2,{3840,2,Curve::Linear},newIndex));
+ assert(swept.hasJumps()&&newIndex==2&&near(swept.value(3840),2));
+ // Chained vertical jumps at arbitrary subdivisions (zigzag).
+ Pattern zig;assert(zig.setBars(4));
+ for(int tick=960;tick<4*kTicksPerBar;tick+=1920){
+  assert(zig.upsert({tick,6,Curve::Linear}));
+  assert(zig.addJump({tick,-4,Curve::Linear}));
+  assert(near(zig.value(tick),-4));
+  assert(zig.value(tick-0.01)>-4);
+ }
  std::cout<<"PitchEngine: all deterministic contracts PASS\n";
 }

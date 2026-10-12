@@ -30,10 +30,10 @@ template<class T> bool rd(IBStream* s,T& v){
 int discrete(double v,int max){
  return std::clamp(static_cast<int>(std::lround(std::clamp(v,0.0,1.0)*max)),0,max);
 }
-struct Header {int32 bars=0,key=0,scale=0,range=0,lock=0,trigger=0,loop=0,bypass=0,count=0;};
+struct Header {int32 bars=0,key=0,scale=0,range=0,lock=0,trigger=0,loop=0,bypass=0,count=0;uint32 version=kPitchStateVersion;};
 bool readHeader(IBStream* s,Header& h){
  uint32 magic=0,version=0;
- if(!rd(s,magic)||!rd(s,version)||magic!=kPitchMagic||(version!=1&&version!=kPitchStateVersion)||
+ if(!rd(s,magic)||!rd(s,version)||magic!=kPitchMagic||(version!=1&&version!=2&&version!=kPitchStateVersion)||
     !rd(s,h.bars)||!rd(s,h.key)||!rd(s,h.scale)||!rd(s,h.range)||
     !rd(s,h.lock)||!rd(s,h.trigger)||!rd(s,h.loop)||!rd(s,h.bypass)||!rd(s,h.count))return false;
  const bool valid=h.bars>=1&&h.bars<=16&&h.key>=0&&h.key<=11&&h.scale>=0&&h.scale<=10&&
@@ -44,14 +44,20 @@ bool readHeader(IBStream* s,Header& h){
  // In V2 this remains the final dropdown choice (2), preserving
  // legacy automation lanes AND V1 project/component-state data.
  if(valid&&version==1&&h.trigger==1)h.trigger=2;
+ h.version=version;
  return valid;
 }
-bool readPattern(IBStream* s,int bars,int count,pitchator::Pattern& p){
+bool readPattern(IBStream* s,int bars,int count,uint32 version,pitchator::Pattern& p){
  if(!p.setBars(bars))return false;
  for(int i=0;i<count;++i){
   int32 tick=0,curve=0;double st=0;
-  if(!rd(s,tick)||!rd(s,st)||!rd(s,curve)||curve<0||curve>2||
-     !p.upsert({tick,st,static_cast<pitchator::Curve>(curve)}))return false;
+  if(!rd(s,tick)||!rd(s,st)||!rd(s,curve)||curve<0||curve>2)return false;
+  pitchator::Point point{tick,st,static_cast<pitchator::Curve>(curve)};
+  if(i==0){
+   if(point.tick!=0||point.semitones!=0||!p.setAt(0,point))return false;
+  }else if(version>=3){
+   if(!p.appendOrdered(point))return false;
+  }else if(!p.upsert(point))return false;
  }
  return p.size()==static_cast<size_t>(count);
 }
@@ -208,7 +214,9 @@ tresult PLUGIN_API PitchatorProcessor::process(ProcessData& d){
     if(!scheduler_.render(pos,clock,pattern_,settings_,true,sendBend))return kResultFalse;
    }
   }
-  if(pos%64==0&&!scheduler_.render(pos,clock,pattern_,settings_,false,sendBend))
+  const bool exactJump=pattern_.hasJumps()&&scheduler_.jumpDue(pos);
+  if((pos%64==0||exactJump)&&
+     !scheduler_.render(pos,clock,pattern_,settings_,exactJump,sendBend))
    return kResultFalse;
  }
  if(d.numSamples==0)for(size_t i=0;i<pc;++i)changeParam(changes_[i].id,changes_[i].value);
@@ -240,7 +248,7 @@ tresult PLUGIN_API PitchatorProcessor::getState(IBStream* s){
 tresult PLUGIN_API PitchatorProcessor::setState(IBStream* s){
  Header h{};if(!readHeader(s,h))return kResultFalse;
  pitchator::Pattern restored{};
- if(!readPattern(s,h.bars,h.count,restored))return kResultFalse;
+ if(!readPattern(s,h.bars,h.count,h.version,restored))return kResultFalse;
  pattern_=restored;
  publishedCurve_.publish(restored);
  usedCurveRevision_=0;
@@ -306,7 +314,7 @@ tresult PLUGIN_API PitchatorController::initialize(FUnknown* ctx){
 }
 tresult PLUGIN_API PitchatorController::setComponentState(IBStream* s){
  Header h{};if(!readHeader(s,h))return kResultFalse;
- pitchator::Pattern check{};if(!readPattern(s,h.bars,h.count,check))return kResultFalse;
+ pitchator::Pattern check{};if(!readPattern(s,h.bars,h.count,h.version,check))return kResultFalse;
  restoring_=true;
  guiPattern_=check;
  if(curveView_){curveView_->refresh();curveView_->setRange(h.range);}
@@ -385,7 +393,7 @@ VSTGUI::CView* PitchatorController::verifyView(
   // Three toggles have explicit gesture+host edit routing so they cannot
   // silently end up as inert CTextButtons on Studio One.
   const bool toggle=(tag==kPitchLock||tag==kPitchLoop||tag==kPitchBypass);
-  if(toggle||(tag>=900&&tag<=909))control->setListener(this);
+  if(toggle||(tag>=900&&tag<=910))control->setListener(this);
   if(auto* button=dynamic_cast<VSTGUI::CTextButton*>(control)){
    // VSTGUI CTextButton defaults to KICK style: one mouse click calls
    // valueChanged(ON) then immediately valueChanged(OFF). This was why
@@ -530,6 +538,7 @@ void PitchatorController::valueChanged(VSTGUI::CControl* control){
  case 905:curveView_->scrollBars(-1);break;
  case 906:curveView_->scrollBars(1);break;
  case 907:curveView_->cycleVisibleBars();break;
+ case 910:curveView_->addJumpSelected();break;
  default:break;
  }
 }

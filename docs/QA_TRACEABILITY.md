@@ -449,3 +449,19 @@ The next Windows run must pass all tests before any artifact is offered.
 - Actions restored to **manual only**; no additional billable CI build.
 - **Studio One human GUI QA OPEN:** verify new note row's legibility at
   100/150%, changing KEY/SCALE live and project save/reopen. Not FINAL.
+
+## Dual point/JUMP engineering coverage (2026-10-13; QA PENDING)
+
+- Explicit ordered two-knot discontinuity at same tick, no epsilon hacks.
+- New CurvePacket magic PCV2 with PCV1 backward compatibility.
+- VST3 state version 3; reads historical states 1/2. Old parameter IDs,
+  controller class IDs and automation normalizations unchanged.
+- New GUI JUMP TO 0 action (tag 910), Shift+Left to form pair and
+  CTRL+Left to delete when DAW intercepts right-click. Two dots render
+  exactly aligned in X, with vertical link. Independent selection/delete.
+- Scheduler anticipates and emits discontinuous bends on their exact
+  first applicable sample; normal smooth curves retain old rendering cadence.
+- Regression tests cover arbitrary zigzag timings, V1/PCV1 migration,
+  corrupt packets/triples, mailbox snapshots, selected-knot editing,
+  host-style click simulation, UI layout and project restore.
+- Studio One real host interaction & audibility **NOT VERIFIED**.

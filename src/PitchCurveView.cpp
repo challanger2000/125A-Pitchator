@@ -85,26 +85,62 @@ void PitchCurveView::draw(CDrawContext* dc){
   }
  }
  dc->setFrameColor(kLine);dc->setLineWidth(2.2);
- // Fixed upper bound: 64 sampling segments per visible bar.
- const int samples=std::max(1,viewBars_*64);
- for(int i=1;i<=samples;++i){
-  const double tick0=scrollBar_*kTicksPerBar+(i-1.0)*viewBars_*kTicksPerBar/samples;
-  const double tick1=scrollBar_*kTicksPerBar+i*viewBars_*kTicksPerBar/samples;
-  if(tick0>=pattern_.lengthTicks())break;
-  dc->drawLine(CPoint(tickToX(tick0),semitoneToY(pattern_.value(tick0))),
-               CPoint(tickToX(std::min(tick1,static_cast<double>(pattern_.lengthTicks()-1))),
-                      semitoneToY(pattern_.value(std::min(tick1,static_cast<double>(pattern_.lengthTicks()-1))))));
+ // Draw individual knot segments, never interpolate through a JUMP.
+ // Two same-tick knots generate an exact VERTICAL line and two nodes.
+ const double first=scrollBar_*kTicksPerBar;
+ const double lastTick=(scrollBar_+viewBars_)*kTicksPerBar;
+ for(size_t idx=1;idx<pattern_.size();++idx){
+  const auto& a=pattern_.at(idx-1);
+  const auto& b=pattern_.at(idx);
+  if(b.tick==a.tick){
+   if(a.tick>=first&&a.tick<=lastTick)
+    dc->drawLine(CPoint(tickToX(a.tick),semitoneToY(a.semitones)),
+                 CPoint(tickToX(b.tick),semitoneToY(b.semitones)));
+   continue;
+  }
+  const double lo=std::max<double>(a.tick,first);
+  const double hi=std::min<double>(b.tick,lastTick);
+  if(hi<=lo)continue;
+  auto sample=[&](double t){
+   return interpolate(a.semitones,b.semitones,
+     (t-a.tick)/(b.tick-a.tick),a.toNext);
+  };
+  if(a.toNext==Curve::Step){
+   const double y=semitoneToY(a.semitones);
+   dc->drawLine(CPoint(tickToX(lo),y),CPoint(tickToX(hi),y));
+   if(hi==b.tick&&b.semitones!=a.semitones)
+    dc->drawLine(CPoint(tickToX(hi),y),
+                 CPoint(tickToX(hi),semitoneToY(b.semitones)));
+   continue;
+  }
+  const int segments=a.toNext==Curve::Smooth?
+    std::clamp(static_cast<int>(std::ceil((hi-lo)/60.0)),2,64):1;
+  double prev=lo;
+  for(int j=1;j<=segments;++j){
+   const double at=lo+(hi-lo)*j/segments;
+   dc->drawLine(CPoint(tickToX(prev),semitoneToY(sample(prev))),
+                CPoint(tickToX(at),semitoneToY(sample(at))));
+   prev=at;
+  }
+ }
+ const auto& tail=pattern_.at(pattern_.size()-1);
+ if(tail.tick<lastTick){
+  const double hi=std::min<double>(pattern_.lengthTicks(),lastTick);
+  const double lo=std::max<double>(tail.tick,first);
+  if(hi>lo)
+   dc->drawLine(CPoint(tickToX(lo),semitoneToY(tail.semitones)),
+                CPoint(tickToX(hi),semitoneToY(tail.semitones)));
  }
  for(size_t i=0;i<pattern_.size();++i){
   const auto& p=pattern_.at(i);
   if(p.tick<scrollBar_*kTicksPerBar||p.tick>(scrollBar_+viewBars_)*kTicksPerBar)continue;
   const double x=tickToX(p.tick),y=semitoneToY(p.semitones);
-  dc->setFillColor(p.tick==selectedTick_?kNodeSelected:kNode);
+  dc->setFillColor(i==selectedIndex_?kNodeSelected:kNode);
   dc->setFrameColor(kBackground);
   dc->drawEllipse(CRect(x-6,y-6,x+6,y+6),kDrawFilledAndStroked);
  }
- const Point* selected=&pattern_.at(0);
- for(size_t i=0;i<pattern_.size();++i)if(pattern_.at(i).tick==selectedTick_){selected=&pattern_.at(i);break;}
+ const Point* selected=selectedPoint();
+ if(!selected)selected=&pattern_.at(0);
  char status[128];
  std::snprintf(status,sizeof(status),"POSITION %d.%d.%03d  |  PITCH %+0.1f ST  |  %s  |  %s",
   selected->tick/kTicksPerBar+1,
@@ -124,61 +160,91 @@ void PitchCurveView::commit(){
 bool PitchCurveView::eraseNear(double x,double y){
  if(x<left()-18||x>left()+width()+18||
     y<top()-18||y>top()+height()+18)return false;
- int32_t nearest=-1;double distance2=18.0*18.0;
- for(size_t i=0;i<pattern_.size();++i){
+ size_t nearest=pattern_.size();double distance2=18.0*18.0;
+ for(size_t i=1;i<pattern_.size();++i){
   const auto& p=pattern_.at(i);
-  if(p.tick==0)continue; // immutable origin, not a user-delete target
   const double dx=x-tickToX(p.tick),dy=y-semitoneToY(p.semitones);
   const double d=dx*dx+dy*dy;
-  if(d<distance2){distance2=d;nearest=p.tick;}
+  if(d<distance2){distance2=d;nearest=i;}
  }
- if(nearest<=0||!pattern_.erase(nearest))return false;
- dirty_=true;selectedTick_=0;commit();
+ if(nearest==pattern_.size()||!pattern_.eraseAt(nearest))return false;
+ dirty_=true;selectedIndex_=0;commit();
+ if(selectionChanged_)selectionChanged_();
+ return true;
+}
+bool PitchCurveView::addJumpSelected(){
+ if(selectedIndex_==0||selectedIndex_>=pattern_.size())return false;
+ const auto& selected=pattern_.at(selectedIndex_);
+ const int32_t tick=selected.tick;
+ // Each timestamp supports precisely one incoming and one outgoing point.
+ for(size_t i=1;i<pattern_.size();++i)
+  if(i!=selectedIndex_&&pattern_.at(i).tick==tick)return false;
+ if(!pattern_.addJump({tick,0.0,Curve::Linear}))return false;
+ ++selectedIndex_;dirty_=true;commit();
  if(selectionChanged_)selectionChanged_();
  return true;
 }
 void PitchCurveView::onMouseDownEvent(MouseDownEvent& e){
  const double x=pointerX(e.mousePosition),y=pointerY(e.mousePosition);
  if(x<left()||x>left()+width()||y<top()-10||y>top()+height()+10)return;
- int32_t nearest=-1;
- // A 6px dot is too small for reliable right-click targeting, especially
- // on a high-DPI display. Use an 18px deletion hit radius for nodes only.
- const bool deleteGesture=e.buttonState.isRight();
- double minDist=deleteGesture?18.0*18.0:130.0;
+ const bool controlDelete=e.buttonState.isLeft()&&
+                           e.modifiers.has(ModifierKey::Control);
+ if(e.buttonState.isRight()||controlDelete){
+  eraseNear(x,y);e.consumed=true;return;
+ }
+ if(!e.buttonState.isLeft())return;
+ size_t nearest=pattern_.size();double minDistance2=130.0;
  for(size_t i=0;i<pattern_.size();++i){
   const auto& p=pattern_.at(i);
   const double dx=x-tickToX(p.tick),dy=y-semitoneToY(p.semitones);
-  const double d=dx*dx+dy*dy;if(d<minDist){minDist=d;nearest=p.tick;}
+  const double d=dx*dx+dy*dy;
+  if(d<minDistance2){minDistance2=d;nearest=i;}
  }
- if(deleteGesture){
-  eraseNear(x,y);
-  e.consumed=true;return;
+ if(e.modifiers.has(ModifierKey::Shift)){
+  // Shift+LeftClick creates the right-hand jump dot at the existing X,
+  // independent of the click's Y. A second point is never shifted in time.
+  size_t nearTick=pattern_.size();double dxBest=12.0;
+  for(size_t i=1;i<pattern_.size();++i){
+   const double dx=std::abs(x-tickToX(pattern_.at(i).tick));
+   if(dx<dxBest){dxBest=dx;nearTick=i;}
+  }
+  if(nearTick<pattern_.size()){
+   selectedIndex_=nearTick;
+   if(pattern_.addJump({pattern_.at(nearTick).tick,yToSemitone(y),
+                        selectedShape_})){
+    ++selectedIndex_;dirty_=true;commit();
+   }
+   if(selectionChanged_)selectionChanged_();
+   invalid();e.consumed=true;return;
+  }
  }
- if(!e.buttonState.isLeft())return;
- if(nearest>=0){selectedTick_=nearest;}
- else{
-  auto tick=xToTick(x);
-  auto value=yToSemitone(y);
-  if(tick==0)value=0;
-  if(pattern_.upsert({tick,value,selectedShape_})){selectedTick_=tick;dirty_=true;}
+ if(nearest<pattern_.size())selectedIndex_=nearest;
+ else {
+  const int32_t tick=xToTick(x);
+  double pitch=yToSemitone(y);
+  if(tick==0)pitch=0;
+  if(pattern_.upsert({tick,pitch,selectedShape_})){
+   for(size_t i=0;i<pattern_.size();++i)
+    if(pattern_.at(i).tick==tick)selectedIndex_=i;
+   dirty_=true;
+  }
  }
- dragging_=true;if(selectionChanged_)selectionChanged_();invalid();e.consumed=true;
+ dragging_=true;if(selectionChanged_)selectionChanged_();
+ invalid();e.consumed=true;
 }
 void PitchCurveView::onMouseMoveEvent(MouseMoveEvent& e){
  if(!dragging_)return;
- if(selectedTick_==0){e.consumed=true;return;}
+ if(selectedIndex_==0||selectedIndex_>=pattern_.size()){
+  e.consumed=true;return;
+ }
  const double x=pointerX(e.mousePosition),y=pointerY(e.mousePosition);
  const int32_t tick=xToTick(std::clamp(x,left(),left()+width()));
  const double value=yToSemitone(std::clamp(y,top(),top()+height()));
  if(tick==0){e.consumed=true;return;}
- Curve style=selectedShape_;
- for(size_t i=0;i<pattern_.size();++i)if(pattern_.at(i).tick==selectedTick_){
-  style=pattern_.at(i).toNext;break;
- }
- Pattern trial=pattern_;
- trial.erase(selectedTick_);
- if(trial.upsert({tick,value,style})){
-  pattern_=trial;selectedTick_=tick;dirty_=true;invalid();
+ const auto selected=pattern_.at(selectedIndex_);
+ size_t newIndex=selectedIndex_;
+ if(pattern_.moveAt(selectedIndex_,{tick,value,selected.toNext},newIndex)){
+  selectedIndex_=newIndex;dirty_=true;invalid();
  }
  e.consumed=true;
 }
@@ -200,49 +266,41 @@ void PitchCurveView::cycleVisibleBars(){
 }
 void PitchCurveView::setCurve(Curve shape){
  selectedShape_=shape;
- for(size_t i=0;i<pattern_.size();++i)if(pattern_.at(i).tick==selectedTick_){
-  Point p=pattern_.at(i);p.toNext=shape;
-  if(pattern_.upsert(p)) {dirty_=true;commit();}
-  break;
+ if(selectedIndex_<pattern_.size()){
+  Point p=pattern_.at(selectedIndex_);p.toNext=shape;
+  if(pattern_.setAt(selectedIndex_,p)){dirty_=true;commit();}
  }
  invalid();
 }
 bool PitchCurveView::eraseSelected(){
- if(pattern_.erase(selectedTick_)){selectedTick_=0;dirty_=true;commit();if(selectionChanged_)selectionChanged_();return true;}
- return false;
+ if(!pattern_.eraseAt(selectedIndex_))return false;
+ selectedIndex_=0;dirty_=true;commit();
+ if(selectionChanged_)selectionChanged_();return true;
 }
 void PitchCurveView::clearCurve(){
- pattern_.clear();selectedTick_=0;dirty_=true;commit();
+ pattern_.clear();selectedIndex_=0;dirty_=true;commit();
  if(selectionChanged_)selectionChanged_();
 }
 const Point* PitchCurveView::selectedPoint() const noexcept {
- for(size_t i=0;i<pattern_.size();++i)
-  if(pattern_.at(i).tick==selectedTick_)return &pattern_.at(i);
- return nullptr;
+ return selectedIndex_<pattern_.size()?&pattern_.at(selectedIndex_):nullptr;
 }
 bool PitchCurveView::editSelectedTick(int32_t tick){
- const auto* chosen=selectedPoint();
- if(!chosen||selectedTick_==0||tick<=0||tick>=pattern_.lengthTicks())return false;
- if(tick==selectedTick_)return true;
- for(size_t i=0;i<pattern_.size();++i)
-  if(pattern_.at(i).tick==tick)return false; // refuse collision, no silent overwrite
- Pattern draft=pattern_;
- Point item=*chosen;
- if(!draft.erase(selectedTick_))return false;
- item.tick=tick;
- if(!draft.upsert(item))return false;
- pattern_=draft;selectedTick_=tick;dirty_=true;commit();
+ if(selectedIndex_==0||selectedIndex_>=pattern_.size()||
+    tick<=0||tick>=pattern_.lengthTicks())return false;
+ const auto old=pattern_.at(selectedIndex_);
+ size_t moved=selectedIndex_;
+ if(!pattern_.moveAt(selectedIndex_,{tick,old.semitones,old.toNext},moved))
+  return false;
+ selectedIndex_=moved;dirty_=true;commit();
  if(selectionChanged_)selectionChanged_();
  return true;
 }
 bool PitchCurveView::editSelectedPitch(double semitones){
- const auto* chosen=selectedPoint();
- if(!chosen||!std::isfinite(semitones)||semitones< -48||semitones>48||
-    (selectedTick_==0&&semitones!=0.0))return false;
- Point item=*chosen;item.semitones=semitones;
- if(!pattern_.upsert(item))return false;
- dirty_=true;commit();
- if(selectionChanged_)selectionChanged_();
+ if(selectedIndex_>=pattern_.size()||!std::isfinite(semitones)||
+    semitones< -48||semitones>48||(selectedIndex_==0&&semitones!=0))return false;
+ Point item=pattern_.at(selectedIndex_);item.semitones=semitones;
+ if(!pattern_.setAt(selectedIndex_,item))return false;
+ dirty_=true;commit();if(selectionChanged_)selectionChanged_();
  return true;
 }
 } // namespace pitchator

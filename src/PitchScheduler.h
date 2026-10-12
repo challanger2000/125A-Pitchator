@@ -17,9 +17,13 @@ struct Clock {
 struct Bend {int offset=0,channel=0;uint16_t value=8192;};
 class Scheduler {
 public:
- void reset() noexcept {channels_={};absoluteSample_=0;}
+ void reset() noexcept {channels_={};absoluteSample_=0;pendingJumps_.fill(-1);}
  int64_t sample()const noexcept{return absoluteSample_;}
  void endBlock(int count) noexcept {if(count>0)absoluteSample_+=count;}
+ bool jumpDue(int offset) const noexcept {
+  for(auto pending:pendingJumps_)if(pending>0&&pending==offset)return true;
+  return false;
+ }
  void noteOn(int ch,int pitch,const Settings& cfg,int offset,
              const Clock& clock=Clock{},int phraseTicks=2*kTicksPerBar) noexcept {
   if(ch<0||ch>=16||pitch<0||pitch>=128)return;
@@ -75,6 +79,33 @@ public:
      next=bend14(value(pattern,ticks,c.pitch,cfg.key,cfg.scale,cfg.lock),cfg.range);
     }
    }
+   // Predict the next same-tick jump within the next 64 samples.
+   // A constant-time check per audio sample then emits the discontinuity
+   // at the FIRST sample on/after the boundary (never quantizes to 64).
+   pendingJumps_[ch]=-1;
+   if(c.total&&pattern.hasJumps()&&running&&std::isfinite(ticks)&&
+      !cfg.bypass&&std::isfinite(clock.rate)&&clock.rate>0&&
+      std::isfinite(clock.tempo)&&clock.tempo>0){
+    const double dTick=clock.tempo*kTicksPerQuarter/(60.0*clock.rate);
+    double closest=std::numeric_limits<double>::infinity();
+    for(size_t i=1;i<pattern.size();++i){
+     if(pattern.at(i).tick!=pattern.at(i-1).tick)continue;
+     const double t=pattern.at(i).tick;
+     double when=t;
+     if(cfg.loop){
+      const double cycles=std::floor((ticks-t)/pattern.lengthTicks())+1.0;
+      when=t+std::max(0.0,cycles)*pattern.lengthTicks();
+     }
+     if(when>ticks&&when<closest)closest=when;
+    }
+    if(std::isfinite(closest)){
+     const double samples=(closest-ticks)/dTick;
+     if(samples>0&&samples<=64.00001){
+      const auto delay=static_cast<int>(std::ceil(samples-1e-9));
+      if(delay>=1&&delay<=64)pendingJumps_[ch]=offset+delay;
+     }
+    }
+   }
    if(next!=c.last&&(force||c.total==0||offset%64==0)){
     if(!sink(Bend{offset,ch,next}))return false;
     c.last=next;
@@ -91,6 +122,7 @@ private:
   uint16_t last=8192;
  };
  std::array<Channel,16> channels_{};
+ std::array<int32_t,16> pendingJumps_{};
  int64_t absoluteSample_=0;
 };
 }

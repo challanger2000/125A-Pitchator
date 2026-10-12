@@ -1,6 +1,8 @@
 name: Pitchator Windows VST3
 on:
-  # Manual-only: conserve 125A Actions minutes; deliberate QA builds only.
+  # Single bundled jump-curve + state-compatibility release QA run.
+  push:
+    branches: [v1.0.0]
   workflow_dispatch:
 permissions:
   contents: read

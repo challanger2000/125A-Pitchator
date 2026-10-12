@@ -23,12 +23,13 @@ public:
  Curve curve() const {return selectedShape_;}
  bool eraseSelected();
  void clearCurve();
- void refresh() {if(!selectedPoint())selectedTick_=0;invalid();}
+ bool addJumpSelected();
+ void refresh() {selectedIndex_=0;invalid();}
  void setRange(int range){pitchRange_=std::clamp(range,1,48);invalid();}
  const Point* selectedPoint() const noexcept;
  bool editSelectedTick(int32_t tick);
  bool editSelectedPitch(double semitones);
- int32_t selectedTick()const noexcept {return selectedTick_;}
+ int32_t selectedTick()const noexcept {const auto* p=selectedPoint();return p?p->tick:0;}
  // Read-only hostless GUI integration-test probes, never mutate state.
  const Pattern& pattern() const noexcept {return pattern_;}
  int visibleBars()const noexcept {return viewBars_;}
@@ -42,7 +43,7 @@ private:
  bool dirty_=false;
  bool syncError_=false;
  int viewBars_=2,scrollBar_=0,pitchRange_=12;
- int32_t selectedTick_=0;
+ size_t selectedIndex_=0;
  Curve selectedShape_=Curve::Linear;
  double left() const;
  double top() const;

@@ -44,5 +44,31 @@ int main(){
  Pattern reconstructed;TEST(unpackCurve(filled,reconstructed));
  TEST(reconstructed.size()==512);
  TEST(reconstructed.at(511).tick==full.at(511).tick);
+ // PCV2, exact two same-tick nodes in controller packet and RT mailbox.
+ Pattern jumped;TEST(jumped.setBars(2));
+ TEST(jumped.upsert({3840,6,Curve::Linear}));
+ TEST(jumped.addJump({3840,0,Curve::Smooth}));
+ auto packet2=packCurve(jumped);
+ TEST(packet2.magic==kCurvePacketMagic&&packet2.count==3);
+ Pattern restoredJump;TEST(unpackCurve(packet2,restoredJump));
+ TEST(restoredJump.size()==3&&restoredJump.hasJumps());
+ TEST(restoredJump.at(1).tick==restoredJump.at(2).tick);
+ TEST(restoredJump.value(3840)==0&&restoredJump.value(3839)>5.99);
+ channel.publish(restoredJump);
+ TEST(channel.snapshot(snapshot,revision));
+ TEST(snapshot.size()==3&&snapshot.hasJumps()&&snapshot.value(3840)==0);
+ // Triple knots and unsorted arrivals are not valid serialized patterns.
+ auto triple=packet2;
+ triple.count=4;triple.points[3]=triple.points[2];
+ TEST(!unpackCurve(triple,retained));
+ auto wrongOrder=packet2;
+ wrongOrder.points[1].tick=4000;
+ TEST(!unpackCurve(wrongOrder,retained));
+ // PCV1 old snapshots remain readable, and cannot embed duplicate ticks.
+ auto oldPacket=packCurve(original);
+ oldPacket.magic=kLegacyCurvePacketMagic;
+ TEST(unpackCurve(oldPacket,retained)&&retained.size()==3);
+ auto brokenV1=packet2;brokenV1.magic=kLegacyCurvePacketMagic;
+ TEST(!unpackCurve(brokenV1,retained));
  std::puts("CurveMailbox snapshot and packet validation PASS");return 0;
 }

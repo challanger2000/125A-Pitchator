@@ -61,6 +61,11 @@ int main(){
   if(processor.find(route)==std::string::npos)return 14;
  }
  if(graph.find("dc->setFont(kNormalFontSmall);")==std::string::npos)return 15;
+ if(graph.find("e.modifiers.has(ModifierKey::Shift)")==std::string::npos||
+    graph.find("e.modifiers.has(ModifierKey::Control)")==std::string::npos||
+    graph.find("addJumpSelected()")==std::string::npos||
+    processor.find("case 910:curveView_->addJumpSelected()")==std::string::npos)
+  return 16;
  if(processor.find("publishedCurve_.publish(candidate)")==std::string::npos)return 7;
  std::puts("Pitchator static GUI contract paths present; host clicks NOT VERIFIED");
 }

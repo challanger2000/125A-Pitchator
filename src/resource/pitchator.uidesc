@@ -33,6 +33,7 @@
   <control-tag name="GraphZoom" tag="907"/>
   <control-tag name="PointPosition" tag="908"/>
   <control-tag name="PointPitch" tag="909"/>
+  <control-tag name="AddJump" tag="910"/>
  </control-tags>
  <template name="PitchatorView" class="CViewContainer" origin="0, 0"
   size="1200, 620" minSize="1200, 620" maxSize="1800, 930"
@@ -103,7 +104,7 @@
   <view class="CTextLabel" origin="36, 219" size="320, 24" title="PITCH CURVE"
    font="Section" font-color="Accent" transparent="true" text-alignment="left"/>
   <view class="CTextLabel" origin="770, 223" size="394, 20"
-   title="LEFT: ADD / DRAG   |   RIGHT: DELETE POINT"
+   title="LEFT: DRAW   |   SHIFT: JUMP   |   CTRL: DELETE"
    font="Caption" font-color="Muted" text-alignment="right" transparent="true"/>
   <view class="CView" origin="30, 248" size="1140, 267"
    pitchator-id="curve" transparent="false" background-color="Panel"/>
@@ -131,6 +132,8 @@
   <view class="CTextButton" control-tag="Snap" origin="488, 556" size="108, 32"
     title="SNAP ON" font="Small" text-color="Text" frame-color="Edge" kick-style="true"/>
 
+  <view class="CTextButton" control-tag="AddJump" origin="608, 556" size="120, 32"
+    title="JUMP TO 0" font="Small" text-color="Text" frame-color="Edge" kick-style="true"/>
   <view class="CTextButton" control-tag="Previous" origin="739, 556" size="108, 32"
     title="&lt; BAR" font="Small" text-color="Text" frame-color="Edge" kick-style="true"/>
   <view class="CTextButton" control-tag="Next" origin="857, 556" size="108, 32"

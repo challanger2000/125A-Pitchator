@@ -85,3 +85,26 @@ HOST SYNC (0), NOTE CONTINUE (0.5), NOTE RETRIGGER (1.0). The old raw
 state-v1 trigger 1 migrates to internal state-v2 trigger 2 on read, without
 changing its musical effect. This prevents already saved MIDI NOTE
 host-automation lanes from silently turning into NOTE CONTINUE.
+
+## Dual knots at identical timestamp (2026-10-13)
+
+A time position may contain one point or an ordered pair: **arrival**
+(end of previous ramp) and **departure** (beginning of next ramp).
+Same-tick pairs generate a real instantaneous MIDI pitch-bend jump;
+they are *not* resampled at neighboring ticks. Examples: BAR 1 rising
+0→+6 while BAR 2 starts at exactly 0, or saw/zigzag shapes with sudden
+changes at arbitrary beats. No triple knots allowed; start tick 0 stays
+neutral. Each knot retains its own Curve type and individually selectable
+pitch, position and deletion. Shift+LeftClick on an existing X creates
+another knot at the click Y. CTRL+LeftClick deletes without relying on
+Studio One to forward right-click; Delete Point remains available. A new
+JUMP TO 0 button duplicates a selected time knot with 0 semitones and
+selects the outgoing knot. Native right-click deletion is retained.
+
+State evolves from version 2 to **3**, retains version 1/2 compatibility.
+GUI binary CurvePacket magic evolves PCV1 → PCV2, while legacy PCV1
+snapshots remain readable. Real-time mailbox retains knot ordering and
+no allocations/locks occur in audio process. Scheduler calculates next
+jump sample and emits discontinuities sample-accurately (rather than
+moving it to the 64-sample periodic tick). All tests must pass before
+Studio One host approval.

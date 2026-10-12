@@ -195,3 +195,15 @@ Windows x64 archive `125A Pitchator.vst3` (artifact `11778533587`) was
 downloaded, tested for archive CRC errors and checked for correct DLL filename.
 
 **Studio One visual QA not yet completed.** The software is not labeled FINAL.
+
+## Curve JUMP support — development candidate
+
+For an immediate reset from BAR 1 +6 to BAR 2 0, draw the +6 end point at
+BAR 2, select it and press **JUMP TO 0**. The new blue 0 dot is at the
+**exact same time**, immediately below the +6 point. Drag either dot in
+pitch independently. At any point, **Shift + LeftClick** near an existing
+knot X creates the second right-hand knot at the mouse's pitch. **Ctrl +
+LeftClick** on a knot deletes it without relying on Studio One's right-
+click handling. The old DELETE POINT button remains. Two dots on one
+beat permit sharp zigzag/saw curves. Project state version 3 saves both
+in order and can load old projects. Native host retest is required.

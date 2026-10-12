@@ -174,7 +174,7 @@ int main(){
  }
  // Footer: aligned 32px buttons, 10px gaps and two consistent clusters.
  for(const auto* tag:{"Clear","Delete","Shape","Snap",
-                       "Previous","Next","GraphZoom"}){
+                       "AddJump","Previous","Next","GraphZoom"}){
   const int i=find(tag);CHECK(i>=0);
   CHECK(nodes[i].rect.y==556&&nodes[i].rect.h==32);
  }

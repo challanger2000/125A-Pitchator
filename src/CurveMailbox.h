@@ -6,7 +6,8 @@
 #include <mutex>
 
 namespace pitchator {
-constexpr uint32_t kCurvePacketMagic = 0x50435631u; // PCV1
+constexpr uint32_t kCurvePacketMagic = 0x50435632u; // PCV2, ordered jump pairs
+constexpr uint32_t kLegacyCurvePacketMagic = 0x50435631u; // PCV1
 struct CurvePacketPoint {int32_t tick=0;int32_t curve=0;double semitones=0;};
 struct CurvePacket {
  uint32_t magic=kCurvePacketMagic;
@@ -14,14 +15,21 @@ struct CurvePacket {
  std::array<CurvePacketPoint,kMaxPoints> points{};
 };
 inline bool unpackCurve(const CurvePacket& packet,Pattern& result) noexcept {
- if(packet.magic!=kCurvePacketMagic||packet.bars<1||packet.bars>16||
+ if((packet.magic!=kCurvePacketMagic&&packet.magic!=kLegacyCurvePacketMagic)||
+    packet.bars<1||packet.bars>16||
     packet.count<1||packet.count>static_cast<int>(kMaxPoints))return false;
  Pattern candidate;
  if(!candidate.setBars(packet.bars))return false;
  for(int i=0;i<packet.count;++i) {
   const auto& p=packet.points[static_cast<size_t>(i)];
-  if(p.curve<0||p.curve>2||!candidate.upsert({p.tick,p.semitones,
-     static_cast<Curve>(p.curve)}))return false;
+  if(p.curve<0||p.curve>2)return false;
+  Point point{p.tick,p.semitones,static_cast<Curve>(p.curve)};
+  if(i==0){
+   if(point.tick!=0||point.semitones!=0||!candidate.setAt(0,point))
+    return false;
+  }else if(packet.magic==kCurvePacketMagic){
+   if(!candidate.appendOrdered(point))return false;
+  }else if(!candidate.upsert(point))return false; // historical PCV1
  }
  if(candidate.size()!=static_cast<size_t>(packet.count)||
     packet.points[0].tick!=0||packet.points[0].semitones!=0)return false;
@@ -72,7 +80,7 @@ public:
     Point p{slot.tick.load(std::memory_order_relaxed),
             slot.semitones.load(std::memory_order_relaxed),
             static_cast<Curve>(slot.curve.load(std::memory_order_relaxed))};
-    if(!next.upsert(p)){good=false;break;}
+    if(!(i==0?next.setAt(0,p):next.appendOrdered(p))){good=false;break;}
    }
    const auto end=revision_.load(std::memory_order_acquire);
    if(good&&begin==end&&!(end&1u)&&next.size()==static_cast<size_t>(count)){

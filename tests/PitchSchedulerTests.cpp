@@ -90,5 +90,31 @@ int main(){
  s.noteOn(0,60,cfg,0,h,phrase.lengthTicks());
  CHECK(s.render(0,h,phrase,cfg,true,sink));
  CHECK(results.back().value==bend14(5,12));
+ // Accurate discontinuity scheduling: no 64-sample delayed transition.
+ Pattern saw;CHECK(saw.setBars(2));
+ CHECK(saw.upsert({3840,6,Curve::Linear}));
+ CHECK(saw.addJump({3840,0,Curve::Linear}));
+ s.reset();results.clear();cfg.trigger=TriggerMode::Continue;cfg.loop=false;
+ h.ppq=0;h.playing=true;
+ s.noteOn(0,60,cfg,0,h,saw.lengthTicks());
+ CHECK(s.render(0,h,saw,cfg,true,sink));
+ s.endBlock(95937); // 63 samples BEFORE BAR 2 at 120BPM/48kHz
+ CHECK(s.render(0,h,saw,cfg,true,sink));
+ CHECK(results.back().value>8192);
+ CHECK(!s.jumpDue(62)&&s.jumpDue(63));
+ CHECK(s.render(63,h,saw,cfg,true,sink)); // exact sample 96000
+ CHECK(results.back().offset==63&&results.back().value==8192);
+ CHECK(!s.jumpDue(64));
+ // Another jump, this time with a nonzero pitch target.
+ Pattern nextJump;CHECK(nextJump.setBars(2));
+ CHECK(nextJump.upsert({960,6,Curve::Linear}));
+ CHECK(nextJump.addJump({960,-4,Curve::Linear}));
+ s.reset();results.clear();s.noteOn(0,60,cfg,0,h,nextJump.lengthTicks());
+ CHECK(s.render(0,h,nextJump,cfg,true,sink));
+ s.endBlock(23990);
+ CHECK(s.render(0,h,nextJump,cfg,true,sink));
+ CHECK(s.jumpDue(10));
+ CHECK(s.render(10,h,nextJump,cfg,true,sink));
+ CHECK(results.back().value==bend14(-4,12));
  std::puts("PitchScheduler test PASS");
 }

@@ -146,7 +146,7 @@ static int runTests(){
  CHECK(reopened.setState(&routedSaved)==kResultOk);
  // Backward compatibility: V1 trigger 1 and normalized 1.0 must still
  // represent NOTE RETRIGGER. The new NOTE CONTINUE occupies 0.5.
- auto writeLegacy = [](MemoryStream& stream)->bool{
+ auto writeLegacy = [](MemoryStream& stream,uint32 legacyVersion=1u)->bool{
   auto wr32=[&](uint32 value){
    int32 n=0;
    return stream.write(&value,sizeof(value),&n)==kResultOk&&n==sizeof(value);
@@ -157,7 +157,7 @@ static int runTests(){
   };
   const double semitones=0;
   int32 bytes=0;
-  return wr32(kPitchMagic)&&wr32(1u)&&
+  return wr32(kPitchMagic)&&wr32(legacyVersion)&&
          wrI(2)&&wrI(0)&&wrI(0)&&wrI(12)&&
          wrI(0)&&wrI(1)&&wrI(1)&&wrI(0)&&
          wrI(1)&&wrI(0)&&
@@ -172,6 +172,15 @@ static int runTests(){
  CHECK(legacy.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&legacy)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchTrigger)==1.0);
+ // Old V2 state used 3 trigger choices and must retain retrigger as ID=2.
+ MemoryStream versionTwo;
+ CHECK(writeLegacy(versionTwo,2u));
+ CHECK(versionTwo.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
+ PitchatorProcessor v2Processor;
+ CHECK(v2Processor.setState(&versionTwo)==kResultOk);
+ CHECK(versionTwo.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
+ CHECK(controller.setComponentState(&versionTwo)==kResultOk);
+ CHECK(controller.getParamNormalized(kPitchTrigger)==0.5);
  CHECK(controller.setParamNormalized(kPitchTrigger,0.5)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchTrigger)==0.5);
  // We must test saving/restoring the new mode through the real processor
@@ -326,6 +335,28 @@ static int runTests(){
  posEdit->setText(VSTGUI::UTF8String("1.1.000"));
  controller.valueChanged(posEdit);
  CHECK(graph->selectedTick()==1080);
+ // JUMP button must duplicate exactly the selected tick and preserve
+ // ordered pair through controller packet -> processor -> project state.
+ auto* jump=custom(910,"JUMP TO 0");
+ CHECK(click(jump));
+ CHECK(graph->pattern().size()==3&&graph->pattern().hasJumps());
+ CHECK(graph->pattern().at(1).tick==graph->pattern().at(2).tick);
+ CHECK(graph->pattern().at(1).semitones==5.25);
+ CHECK(graph->pattern().at(2).semitones==0.0);
+ auto jumped= pitchator::packCurve(graph->pattern());
+ HostMessage jumpMessage;jumpMessage.setMessageID("125A.Pitchator.Curve");
+ CHECK(jumpMessage.getAttributes()->setBinary("Curve",&jumped,
+       static_cast<uint32>(sizeof(jumped)))==kResultOk);
+ CHECK(routed.notify(&jumpMessage)==kResultOk);
+ MemoryStream jumpSaved;CHECK(routed.getState(&jumpSaved)==kResultOk);
+ CHECK(jumpSaved.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
+ PitchatorProcessor jumpReopened;
+ CHECK(jumpReopened.setState(&jumpSaved)==kResultOk);
+ CHECK(jumpSaved.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
+ CHECK(controller.setComponentState(&jumpSaved)==kResultOk);
+ CHECK(graph->pattern().size()==3&&graph->pattern().hasJumps());
+ CHECK(graph->pattern().at(1).tick==1080&&graph->pattern().at(2).tick==1080);
+ jump->forget();
  controller.willClose(nullptr);
  zoom->forget();shape->forget();snap->forget();graphZoom->forget();
  next->forget();prev->forget();clear->forget();remove->forget();
