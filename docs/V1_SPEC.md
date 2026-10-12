@@ -52,3 +52,12 @@ routing, Studio One host playback and complete UI/parameter/end-to-end audit.
 ## Explicitly not implemented in this initial commit
 VST3 wrapper/controller and output event scheduler; graphical curve editor;
 GUI branding and VSTGUI; host state serialization and DAW test evidence.
+
+## Numeric editing contract (V1 extension)
+Use BAR.BEAT.TICK (e.g. 2.3.120; ticks 0–959 inside each beat);
+960 PPQ/quarter, 3840 PPQ/bar. User-facing values start at bar 1,
+beat 1, tick 000. The curve stores exact ticks and the mouse Snap
+supports 1/32 notes (120 ticks), without rounding typed positions.
+Type pitch as signed semitones with decimal dot or German decimal
+comma; all edits reject invalid/out-of-range values, cannot move
+the immutable point 0 or silently replace a point at an occupied time.

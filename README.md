@@ -12,7 +12,10 @@ LegacyMIDICCOutEvent, forwards source notes, uses host PPQ/tempo or MIDI-Note
 trigger, and serializes the curve and parameters in a versioned component state.
 A VSTGUI graphical curve editor prototype has been added: point insertion,
 dragging, removal, Snap, Step/Linear/Smooth, bar scrolling, graph zoom,
-Clear Pattern and UI zoom 100/150%. It publishes validated snapshots
+Clear Pattern and UI zoom 100/150%. Precise point entry is now available as
+BAR.BEAT.TICK (0–959 ticks per beat) and signed decimal semitones (also
+accepting German decimal comma), with 1/32 mouse snapping, editable
+selection and variable pitch-axis scaling. It publishes validated snapshots
 to the processor. **Windows x64 build, CTest and Steinberg validator are verified; Studio One GUI/MIDI interaction is still unverified**.
 
 See [Native VST3 milestone](docs/NATIVE-VST3-MILESTONE.md) for engineering

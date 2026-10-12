@@ -1,6 +1,9 @@
 name: Pitchator Windows VST3
 on:
   # Manual-only after Build #5, to avoid CI on each development commit.
+  # Exactly one batched verification on this feature commit; return to manual afterward.
+  push:
+    branches: [v1.0.0]
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,7 +15,7 @@ jobs:
       - name: Configure pinned SDK
         run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
       - name: Build VST3 and Validator
-        run: cmake --build build --config Release --target Pitchator PitchEngineTests PitchSchedulerTests CurveMailboxTests PitchatorUIContractTests PitchatorParameterFlushTests validator --parallel
+        run: cmake --build build --config Release --target Pitchator PitchEngineTests PitchSchedulerTests CurveMailboxTests PitchatorUIContractTests PitchatorParameterFlushTests PitchPointEditTests validator --parallel
       - name: Core Tests
         run: ctest --test-dir build -C Release --output-on-failure
       - name: Validate VST3

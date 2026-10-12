@@ -30,6 +30,8 @@
   <control-tag name="Previous" tag="905"/>
   <control-tag name="Next" tag="906"/>
   <control-tag name="GraphZoom" tag="907"/>
+  <control-tag name="PointPosition" tag="908"/>
+  <control-tag name="PointPitch" tag="909"/>
  </control-tags>
  <template name="PitchatorView" class="CViewContainer" origin="0, 0"
   size="1200, 620" minSize="1200, 620" maxSize="1800, 930"
@@ -63,8 +65,12 @@
   <view class="CTextLabel" origin="681, 225" size="480, 18"
    title="LEFT: ADD / DRAG   |   RIGHT: DELETE POINT"
    font="Small" font-color="Muted" text-alignment="right" transparent="true"/>
-  <view class="CView" origin="30, 248" size="1140, 285"
+  <view class="CView" origin="30, 248" size="1140, 267"
    pitchator-id="curve" transparent="false" background-color="Panel"/>
+  <view class="CTextLabel" origin="38, 524" size="199, 22" title="POSITION (BAR.BEAT.TICK)" font="Small" font-color="Muted"/>
+  <view class="CTextEdit" control-tag="PointPosition" origin="240, 520" size="115, 29" font="Small" font-color="Text" back-color="Panel" frame-color="Edge" title="1.1.000"/>
+  <view class="CTextLabel" origin="375, 524" size="92, 22" title="PITCH (ST)" font="Small" font-color="Muted"/>
+  <view class="CTextEdit" control-tag="PointPitch" origin="472, 520" size="105, 29" font="Small" font-color="Text" back-color="Panel" frame-color="Edge" title="+0.00"/>
   <view class="CTextButton" control-tag="Clear" origin="36, 555" size="128, 32" title="CLEAR PATTERN" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>
   <view class="CTextButton" control-tag="Delete" origin="173, 555" size="118, 32" title="DELETE POINT" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>
   <view class="CTextButton" control-tag="Shape" origin="301, 555" size="150, 32" title="CURVE: LINEAR" text-color="Text" font="Small" frame-color="Edge" kick-style="true"/>

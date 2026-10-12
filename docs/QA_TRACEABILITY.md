@@ -85,3 +85,21 @@ click/drag/zoom/reopen; every-control state/automation traceability;
 sample-accurate bend curves through transport jumps, host seeking and offline
 rendering; mouse hitboxes at 100/150%; packaging and customer documentation.
 Static UI test is not a substitute for a real host click test.
+
+## Numerical curve-editor milestone — source integrated, host verification open
+
+- Exact selected-point POSITION field: BAR.BEAT.TICK (960 PPQ),
+  1-based bars/beats, tick 0–959, across 1–16 bars.
+- Selected-point PITCH field: decimal semitones ±48 with German comma/dot.
+- Mouse Snap now aligns to 1/32 (120 ticks); no-snap freehand positions
+  retain full PPQ tick precision.
+- Invalid numbers and duplicate point positions are rejected without
+  replacing or deleting existing points; point 0 stays fixed at (0, 0 st).
+- Selection refreshes both fields after mouse add/drag/delete, Clear,
+  project restore and Length change. Curve display follows chosen bend range.
+- New deterministic `PitchPointEditTests`; GUI routing also checked
+  in `PitchatorUIContractTests`. These do **not** prove native GUI click
+  behavior or Studio One MIDI routing.
+
+**No FINAL designation until real-editor lifecycle, Studio One and
+125A Tester results are available.**

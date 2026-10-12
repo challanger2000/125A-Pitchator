@@ -16,8 +16,8 @@ constexpr CColor kLine(48,201,178,255);
 constexpr CColor kText(211,225,226,255);
 constexpr CColor kWarning(239,138,111,255);
 }
-PitchCurveView::PitchCurveView(const CRect& bounds,Pattern& pattern,std::function<bool()> publish)
-:CView(bounds),pattern_(pattern),publish_(std::move(publish)) {setMouseEnabled(true);}
+PitchCurveView::PitchCurveView(const CRect& bounds,Pattern& pattern,std::function<bool()> publish,std::function<void()> selected)
+:CView(bounds),pattern_(pattern),publish_(std::move(publish)),selectionChanged_(std::move(selected)) {setMouseEnabled(true);}
 double PitchCurveView::left() const {return getViewSize().left+55;}
 double PitchCurveView::top() const {return getViewSize().top+28;}
 double PitchCurveView::width() const {return std::max(1.0,getWidth()-76.0);}
@@ -26,18 +26,18 @@ double PitchCurveView::tickToX(double t) const {
  return left()+(t-scrollBar_*kTicksPerBar)*width()/(viewBars_*kTicksPerBar);
 }
 double PitchCurveView::semitoneToY(double pitch) const {
- return top()+(12.0-std::clamp(pitch,-12.0,12.0))*height()/24.0;
+ return top()+(pitchRange_-std::clamp(pitch,-static_cast<double>(pitchRange_),static_cast<double>(pitchRange_)))*height()/(2.0*pitchRange_);
 }
 int32_t PitchCurveView::xToTick(double x) const {
  double t=scrollBar_*kTicksPerBar+(x-left())*(viewBars_*kTicksPerBar)/width();
  t=std::clamp(t,0.0,static_cast<double>(pattern_.lengthTicks()-1));
- if(snap_) t=std::round(t/240.0)*240.0;
+ if(snap_) t=std::round(t/120.0)*120.0;
  return std::min(pattern_.lengthTicks()-1,static_cast<int32_t>(t));
 }
 double PitchCurveView::yToSemitone(double y) const {
- double p=12.0-(y-top())*24.0/height();
+ double p=pitchRange_-(y-top())*(2.0*pitchRange_)/height();
  // Vertical grid intentionally has integer semitone precision in V1.
- return std::round(std::clamp(p,-12.0,12.0));
+ return std::round(std::clamp(p,-static_cast<double>(pitchRange_),static_cast<double>(pitchRange_)));
 }
 double PitchCurveView::pointerX(const CPoint& pos) const {
  CPoint p=pos;frameToLocal(p);
@@ -53,11 +53,12 @@ void PitchCurveView::draw(CDrawContext* dc){
  dc->setFillColor(kPanel);
  dc->drawRect(CRect(left(),top(),left()+width(),top()+height()),kDrawFilled);
  dc->setLineWidth(1);
- for(int st=-12;st<=12;++st){
+ const int pitchGridStep=pitchRange_<=12?1:pitchRange_<=24?2:4;
+ for(int st=-pitchRange_;st<=pitchRange_;st+=pitchGridStep){
   const double y=semitoneToY(st);
   dc->setFrameColor(st==0?kBar:kGrid);
   dc->drawLine(CPoint(left(),y),CPoint(left()+width(),y));
-  if(st%3==0){
+  if(st==0||st%std::max(3,pitchRange_/4)==0){
    char label[32];std::snprintf(label,sizeof(label),"%+d",st);
    dc->setFontColor(kText);
    dc->drawString(label,CRect(rect.left+6,y-10,rect.left+48,y+10),kRightText);
@@ -102,7 +103,7 @@ void PitchCurveView::draw(CDrawContext* dc){
  std::snprintf(status,sizeof(status),"POSITION %d.%d.%d  |  PITCH %+0.1f ST  |  %s  |  %s",
   selected->tick/kTicksPerBar+1,
   (selected->tick%kTicksPerBar)/kTicksPerQuarter+1,
-  (selected->tick%kTicksPerQuarter)/240+1,
+  (selected->tick%kTicksPerQuarter)/120+1,
   selected->semitones,
   selected->toNext==Curve::Step?"STEP":selected->toNext==Curve::Smooth?"SMOOTH":"LINEAR",
   snap_?"SNAP ON":"SNAP OFF");
@@ -124,7 +125,7 @@ void PitchCurveView::onMouseDownEvent(MouseDownEvent& e){
   const double d=dx*dx+dy*dy;if(d<minDist){minDist=d;nearest=p.tick;}
  }
  if(e.buttonState.isRight()){
-  if(nearest>0&&pattern_.erase(nearest)){dirty_=true;selectedTick_=0;commit();}
+  if(nearest>0&&pattern_.erase(nearest)){dirty_=true;selectedTick_=0;commit();if(selectionChanged_)selectionChanged_();}
   e.consumed=true;return;
  }
  if(!e.buttonState.isLeft())return;
@@ -135,7 +136,7 @@ void PitchCurveView::onMouseDownEvent(MouseDownEvent& e){
   if(tick==0)value=0;
   if(pattern_.upsert({tick,value,selectedShape_})){selectedTick_=tick;dirty_=true;}
  }
- dragging_=true;invalid();e.consumed=true;
+ dragging_=true;if(selectionChanged_)selectionChanged_();invalid();e.consumed=true;
 }
 void PitchCurveView::onMouseMoveEvent(MouseMoveEvent& e){
  if(!dragging_)return;
@@ -157,7 +158,7 @@ void PitchCurveView::onMouseMoveEvent(MouseMoveEvent& e){
 }
 void PitchCurveView::onMouseUpEvent(MouseUpEvent& e){
  if(!dragging_)return;
- dragging_=false;commit();e.consumed=true;
+ dragging_=false;commit();if(selectionChanged_)selectionChanged_();e.consumed=true;
 }
 void PitchCurveView::onMouseCancelEvent(MouseCancelEvent& e){
  if(dragging_){dragging_=false;commit();e.consumed=true;}
@@ -181,10 +182,41 @@ void PitchCurveView::setCurve(Curve shape){
  invalid();
 }
 bool PitchCurveView::eraseSelected(){
- if(pattern_.erase(selectedTick_)){selectedTick_=0;dirty_=true;commit();return true;}
+ if(pattern_.erase(selectedTick_)){selectedTick_=0;dirty_=true;commit();if(selectionChanged_)selectionChanged_();return true;}
  return false;
 }
 void PitchCurveView::clearCurve(){
  pattern_.clear();selectedTick_=0;dirty_=true;commit();
+ if(selectionChanged_)selectionChanged_();
+}
+const Point* PitchCurveView::selectedPoint() const noexcept {
+ for(size_t i=0;i<pattern_.size();++i)
+  if(pattern_.at(i).tick==selectedTick_)return &pattern_.at(i);
+ return nullptr;
+}
+bool PitchCurveView::editSelectedTick(int32_t tick){
+ const auto* chosen=selectedPoint();
+ if(!chosen||selectedTick_==0||tick<=0||tick>=pattern_.lengthTicks())return false;
+ if(tick==selectedTick_)return true;
+ for(size_t i=0;i<pattern_.size();++i)
+  if(pattern_.at(i).tick==tick)return false; // refuse collision, no silent overwrite
+ Pattern draft=pattern_;
+ Point item=*chosen;
+ if(!draft.erase(selectedTick_))return false;
+ item.tick=tick;
+ if(!draft.upsert(item))return false;
+ pattern_=draft;selectedTick_=tick;dirty_=true;commit();
+ if(selectionChanged_)selectionChanged_();
+ return true;
+}
+bool PitchCurveView::editSelectedPitch(double semitones){
+ const auto* chosen=selectedPoint();
+ if(!chosen||!std::isfinite(semitones)||semitones< -48||semitones>48||
+    (selectedTick_==0&&semitones!=0.0))return false;
+ Point item=*chosen;item.semitones=semitones;
+ if(!pattern_.upsert(item))return false;
+ dirty_=true;commit();
+ if(selectionChanged_)selectionChanged_();
+ return true;
 }
 } // namespace pitchator

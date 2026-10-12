@@ -2,12 +2,14 @@
 #include "PitchEngine.h"
 #include "vstgui/lib/cview.h"
 #include <functional>
+#include <algorithm>
+#include "PitchPointEdit.h"
 
 namespace pitchator {
 class PitchCurveView final : public VSTGUI::CView {
 public:
  PitchCurveView(const VSTGUI::CRect& bounds, Pattern& pattern,
-                std::function<bool()> publish);
+                std::function<bool()> publish,std::function<void()> selectionChanged);
  void draw(VSTGUI::CDrawContext* ctx) override;
  void onMouseDownEvent(VSTGUI::MouseDownEvent& event) override;
  void onMouseMoveEvent(VSTGUI::MouseMoveEvent& event) override;
@@ -21,15 +23,21 @@ public:
  Curve curve() const {return selectedShape_;}
  bool eraseSelected();
  void clearCurve();
- void refresh() {invalid();}
+ void refresh() {if(!selectedPoint())selectedTick_=0;invalid();}
+ void setRange(int range){pitchRange_=std::clamp(range,1,48);invalid();}
+ const Point* selectedPoint() const noexcept;
+ bool editSelectedTick(int32_t tick);
+ bool editSelectedPitch(double semitones);
+ int32_t selectedTick()const noexcept {return selectedTick_;}
 private:
  Pattern& pattern_;
  std::function<bool()> publish_;
+ std::function<void()> selectionChanged_;
  bool snap_=true;
  bool dragging_=false;
  bool dirty_=false;
  bool syncError_=false;
- int viewBars_=2,scrollBar_=0;
+ int viewBars_=2,scrollBar_=0,pitchRange_=12;
  int32_t selectedTick_=0;
  Curve selectedShape_=Curve::Linear;
  double left() const;

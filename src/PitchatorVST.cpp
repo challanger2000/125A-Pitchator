@@ -3,6 +3,8 @@
 #include "vstgui/uidescription/uiattributes.h"
 #include "vstgui/lib/controls/cbuttons.h"
 #include "vstgui/lib/controls/ccontrol.h"
+#include "vstgui/lib/controls/ctextedit.h"
+#include "PitchPointEdit.h"
 #include <cstring>
 #include "pluginterfaces/base/ibstream.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
@@ -296,7 +298,8 @@ tresult PLUGIN_API PitchatorController::setComponentState(IBStream* s){
  pitchator::Pattern check{};if(!readPattern(s,h.bars,h.count,check))return kResultFalse;
  restoring_=true;
  guiPattern_=check;
- if(curveView_)curveView_->refresh();
+ if(curveView_){curveView_->refresh();curveView_->setRange(h.range);}
+ syncPointEditors();
  EditControllerEx1::setParamNormalized(kPitchKey,h.key/11.0);EditControllerEx1::setParamNormalized(kPitchScale,h.scale/10.0);
  EditControllerEx1::setParamNormalized(kPitchBars,(h.bars-1)/15.0);
  EditControllerEx1::setParamNormalized(kPitchRange,(h.range-1)/47.0);
@@ -327,8 +330,9 @@ tresult PLUGIN_API PitchatorController::setParamNormalized(ParamID id,ParamValue
   while(!guiPattern_.setBars(bars)&&guiPattern_.size()>1)
    guiPattern_.erase(guiPattern_.at(guiPattern_.size()-1).tick);
   guiPattern_.setBars(bars);
-  if(curveView_){curveView_->refresh();publishPattern();}
+  if(curveView_){curveView_->refresh();publishPattern();syncPointEditors();}
  }
+ if(id==kPitchRange&&curveView_)curveView_->setRange(discrete(normalized,47)+1);
  return result;
 }
 IPlugView* PLUGIN_API PitchatorController::createView(FIDString name){
@@ -346,18 +350,22 @@ VSTGUI::CView* PitchatorController::verifyView(
  if(auto* id=attrs.getAttributeValue("pitchator-id")){
   if(*id=="curve"){
    auto* graph=new pitchator::PitchCurveView(view->getViewSize(),guiPattern_,
-                       [this]{return publishPattern();});
+                       [this]{return publishPattern();},[this]{syncPointEditors();});
    curveView_=graph;
+   curveView_->setRange(discrete(getParamNormalized(kPitchRange),47)+1);
    return graph;
   }
  }
  if(auto* control=dynamic_cast<VSTGUI::CControl*>(view)){
   const int tag=control->getTag();
-  if(tag>=900&&tag<=907){
+  if(tag>=900&&tag<=909){
    control->setListener(this);
    if(tag==900)zoomButton_=dynamic_cast<VSTGUI::CTextButton*>(control);
    if(tag==903)shapeButton_=dynamic_cast<VSTGUI::CTextButton*>(control);
    if(tag==904)snapButton_=dynamic_cast<VSTGUI::CTextButton*>(control);
+   if(tag==908)positionEdit_=dynamic_cast<VSTGUI::CTextEdit*>(control);
+   if(tag==909)pitchEdit_=dynamic_cast<VSTGUI::CTextEdit*>(control);
+   if(tag==908||tag==909)syncPointEditors();
   }
  }
  return view;
@@ -366,10 +374,52 @@ void PitchatorController::willClose(VSTGUI::VST3Editor* editor){
  if(editor)zoom_=editor->getZoomFactor();
  activeEditor_=nullptr;curveView_=nullptr;zoomButton_=nullptr;
  shapeButton_=nullptr;snapButton_=nullptr;
+ positionEdit_=nullptr;pitchEdit_=nullptr;
+}
+void PitchatorController::syncPointEditors(){
+ if(!curveView_)return;
+ const auto* p=curveView_->selectedPoint();
+ if(!p)return;
+ char position[32],pitch[32];
+ pitchator::edit::formatPosition(p->tick,position);
+ pitchator::edit::formatSemitones(p->semitones,pitch);
+ // Avoid replacing text while the user is typing into a native edit control.
+ if(positionEdit_&&!positionEdit_->getPlatformTextEdit())
+  positionEdit_->setText(VSTGUI::UTF8String(position));
+ if(pitchEdit_&&!pitchEdit_->getPlatformTextEdit())
+  pitchEdit_->setText(VSTGUI::UTF8String(pitch));
 }
 void PitchatorController::valueChanged(VSTGUI::CControl* control){
- if(!control||control->getValueNormalized()<=0.5f)return;
+ if(!control)return;
  const int tag=control->getTag();
+ if(tag==908||tag==909){
+  auto* field=dynamic_cast<VSTGUI::CTextEdit*>(control);
+  if(!field||!curveView_)return;
+  bool ok=false;
+  if(tag==908){
+   int32_t tick=-1;
+   ok=pitchator::edit::parsePosition(field->getText().data(),
+                                    guiPattern_.bars(),tick)&&
+      curveView_->editSelectedTick(tick);
+  }else{
+   double semitones=0;
+   ok=pitchator::edit::parseSemitones(field->getText().data(),semitones)&&
+      curveView_->editSelectedPitch(semitones);
+  }
+  // Commit on focus loss, restore valid text after rejection.
+  if(!ok){
+   // Restore the accepted value even while the platform text box has focus.
+   const auto* selected=curveView_->selectedPoint();
+   if(selected){
+    char canonical[32];
+    if(tag==908)pitchator::edit::formatPosition(selected->tick,canonical);
+    else pitchator::edit::formatSemitones(selected->semitones,canonical);
+    field->setText(VSTGUI::UTF8String(canonical));
+   }
+  }
+  return;
+ }
+ if(control->getValueNormalized()<=0.5f)return;
  if(tag==900){
   zoom_=zoom_<1.25?1.5:1.0;
   if(activeEditor_)activeEditor_->setZoomFactor(zoom_);
