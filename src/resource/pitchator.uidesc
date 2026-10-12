@@ -94,6 +94,11 @@
       font="Caption" font-color="Muted" transparent="true" text-alignment="center"/>
     <view class="CTextButton" control-tag="Bypass" origin="1033, 52" size="105, 32"
       title="BYPASS OFF" font="Small" text-color="Text" frame-color="Edge"/>
+    <!-- Music-theory reference only. Scale Lock remains independently switchable. -->
+    <view class="CTextLabel" origin="16, 88" size="1122, 20"
+      title="NOTES: C  ·  C♯  ·  D  ·  D♯  ·  E  ·  F  ·  F♯  ·  G  ·  G♯  ·  A  ·  A♯  ·  B"
+      pitchator-id="scale-notes" font="Caption" font-color="Accent"
+      transparent="true" text-alignment="left"/>
   </view>
   <view class="CTextLabel" origin="36, 219" size="320, 24" title="PITCH CURVE"
    font="Section" font-color="Accent" transparent="true" text-alignment="left"/>

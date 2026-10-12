@@ -405,3 +405,18 @@ Tested commit `f00d25dc06abeb245232e71c358d8e39301795e0`.
 
 **Gate status:** native and validator QA PASS; physical Studio One host
 interaction and user acceptance NOT VERIFIED; not Gumroad FINAL.
+
+## Scale note reference display (2026-10-13; QA PENDING)
+
+New informational `NOTES:` line inside unused bottom 20px of the settings panel.
+KEY and SCALE changes recompute the international spelling from the **same
+isInScale() mask as the DSP**. C Natural Minor shows `C D E♭ F G A♭ B♭`;
+C Harmonic Minor uses B natural, and C Major uses E natural. `SCALE LOCK`
+does not control this theoretical reference row; it only affects output
+pitch quantization. No new VST parameter, state version or DSP modification.
+The line refreshes on controller setParamNormalized, editor creation and
+state restore; cleared on editor close. New `ScaleNoteNamesTests` covers
+all 132 key/mode combinations and compares pitch classes to `isInScale`.
+Native controller integration tests cover key/scale edits and recall. New
+line's geometry is checked at 100/150% by UI Layout Tests. Real Studio One
+visualization and refresh **NOT VERIFIED** until physical DAW test.

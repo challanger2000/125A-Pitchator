@@ -99,6 +99,15 @@ int main(){
  CHECK(nodes[logoNode].cls=="CView");
  CHECK(nodes[logoNode].rect.w*0.5==nodes[logoNode].rect.h);
  CHECK(nodes[panel].rect.w==1152&&nodes[panel].rect.h==112);
+ int noteId=-1;
+ for(size_t i=0;i<nodes.size();++i)
+  if(nodes[i].id=="scale-notes")noteId=static_cast<int>(i);
+ CHECK(noteId>=0&&nodes[noteId].parent==panel);
+ CHECK(nodes[noteId].cls=="CTextLabel"&&nodes[noteId].transparent=="true");
+ CHECK(nodes[noteId].rect.x==16&&nodes[noteId].rect.y==88);
+ CHECK(nodes[noteId].rect.w==1122&&nodes[noteId].rect.h==20);
+ CHECK(factory.find("syncScaleNotes()")!=std::string::npos);
+ CHECK(!collides(absolute(nodes,noteId),absolute(nodes,find("Scale"))));
  // Centering is geometric, and must not conflict with official logo or zoom.
  for(const char* text:{"125A PITCHATOR","MIDI PITCH CURVE SEQUENCER"}){
   int id=title(text);CHECK(id>=0);

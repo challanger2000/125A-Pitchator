@@ -8,7 +8,7 @@
 #include "public.sdk/source/vst/vsteditcontroller.h"
 #include "pluginterfaces/vst/ivstevents.h"
 #include <array>
-namespace VSTGUI {class CControl; class CTextButton; class CTextEdit;}
+namespace VSTGUI {class CControl; class CTextButton; class CTextEdit; class CTextLabel;}
 namespace pitchator {class PitchCurveView;}
 namespace Steinberg::Vst {
 enum PitchParam:ParamID {
@@ -62,6 +62,7 @@ public:
  bool publishPattern();
  void syncPointEditors();
  void syncToggleButtons();
+ void syncScaleNotes();
 private:
  pitchator::Pattern guiPattern_{};
  pitchator::PitchCurveView* curveView_=nullptr;
@@ -74,6 +75,7 @@ private:
  VSTGUI::CTextButton* bypassButton_=nullptr;
  VSTGUI::CTextEdit* positionEdit_=nullptr;
  VSTGUI::CTextEdit* pitchEdit_=nullptr;
+ VSTGUI::CTextLabel* scaleNotesLabel_=nullptr;
  bool restoring_=false;
  double zoom_=1.0;
 };

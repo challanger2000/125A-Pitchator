@@ -1,6 +1,7 @@
 #include "../src/PitchatorVST.h"
 #include "../src/PitchCurveView.h"
 #include "vstgui/lib/controls/ctextedit.h"
+#include "vstgui/lib/controls/ctextlabel.h"
 #include "public.sdk/source/common/memorystream.h"
 #include "public.sdk/source/vst/hosting/parameterchanges.h"
 #include "public.sdk/source/vst/hosting/hostclasses.h"
@@ -194,6 +195,24 @@ static int runTests(){
  CHECK(snapshot.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
  CHECK(controller.setComponentState(&snapshot)==kResultOk);
  CHECK(controller.getParamNormalized(kPitchBypass)==1.0);
+
+ // Live KEY/SCALE note display and state restoration, no audio-DSP change.
+ VSTGUI::UIAttributes noteAttrs;
+ noteAttrs.setAttribute("pitchator-id","scale-notes");
+ auto* noteLabel=new VSTGUI::CTextLabel(VSTGUI::CRect(40,180,1162,200),"NOTES");
+ CHECK(controller.verifyView(noteLabel,noteAttrs,nullptr,nullptr)==noteLabel);
+ CHECK(noteLabel->getText()==pitchator::scaleNoteNames(0,pitchator::Scale::Chromatic).c_str());
+ CHECK(controller.setParamNormalized(kPitchKey,0.0)==kResultOk);
+ CHECK(controller.setParamNormalized(kPitchScale,2.0/10.0)==kResultOk);
+ CHECK(noteLabel->getText()==
+       u8"NOTES: C  \u00B7  D  \u00B7  E\u266D  \u00B7  F  \u00B7  G  \u00B7  A\u266D  \u00B7  B\u266D");
+ CHECK(controller.setParamNormalized(kPitchKey,5.0/11.0)==kResultOk);
+ CHECK(noteLabel->getText()==pitchator::scaleNoteNames(5,pitchator::Scale::NaturalMinor).c_str());
+ CHECK(snapshot.seek(0,IBStream::kIBSeekSet,nullptr)==kResultOk);
+ CHECK(controller.setComponentState(&snapshot)==kResultOk);
+ CHECK(noteLabel->getText()==pitchator::scaleNoteNames(0,pitchator::Scale::Chromatic).c_str());
+ controller.willClose(nullptr);
+ noteLabel->forget();
  // Real VSTGUI CTextButton left-down / left-up path into controller,
  // including explicit VST3 edit sequence for ON and OFF.
  auto checkToggle=[&](ParamID id,bool initial,const char* initialTitle)->bool {

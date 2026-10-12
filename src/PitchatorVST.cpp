@@ -7,6 +7,8 @@
 #include "vstgui/lib/controls/ctextedit.h"
 #include "vstgui/lib/cframe.h"
 #include "PitchPointEdit.h"
+#include "ScaleNoteNames.h"
+#include "vstgui/lib/controls/ctextlabel.h"
 #include <cstring>
 #include "pluginterfaces/base/ibstream.h"
 #include "pluginterfaces/vst/ivstmidicontrollers.h"
@@ -318,6 +320,7 @@ tresult PLUGIN_API PitchatorController::setComponentState(IBStream* s){
  EditControllerEx1::setParamNormalized(kPitchBypass,static_cast<double>(h.bypass));
  restoring_=false;
  syncToggleButtons();
+ syncScaleNotes();
  return kResultOk;
 }
 
@@ -344,6 +347,7 @@ tresult PLUGIN_API PitchatorController::setParamNormalized(ParamID id,ParamValue
  }
  if(id==kPitchRange&&curveView_)curveView_->setRange(discrete(normalized,47)+1);
  if(id==kPitchLock||id==kPitchLoop||id==kPitchBypass)syncToggleButtons();
+ if(id==kPitchKey||id==kPitchScale)syncScaleNotes();
  return result;
 }
 IPlugView* PLUGIN_API PitchatorController::createView(FIDString name){
@@ -360,6 +364,11 @@ VSTGUI::CView* PitchatorController::verifyView(
  activeEditor_=editor;
  if(auto* id=attrs.getAttributeValue("pitchator-id")){
   if(*id=="logo")return new pitchator::BrandLogoView(view->getViewSize());
+  if(*id=="scale-notes"){
+   scaleNotesLabel_=dynamic_cast<VSTGUI::CTextLabel*>(view);
+   syncScaleNotes();
+   return view;
+  }
   if(*id=="curve"){
    auto* graph=new pitchator::PitchCurveView(view->getViewSize(),guiPattern_,
                        [this]{return publishPattern();},[this]{syncPointEditors();});
@@ -406,7 +415,14 @@ void PitchatorController::willClose(VSTGUI::VST3Editor* editor){
  activeEditor_=nullptr;curveView_=nullptr;zoomButton_=nullptr;
  shapeButton_=nullptr;snapButton_=nullptr;
  lockButton_=nullptr;loopButton_=nullptr;bypassButton_=nullptr;
- positionEdit_=nullptr;pitchEdit_=nullptr;
+ positionEdit_=nullptr;pitchEdit_=nullptr;scaleNotesLabel_=nullptr;
+}
+void PitchatorController::syncScaleNotes(){
+ if(!scaleNotesLabel_)return;
+ const int key=discrete(getParamNormalized(kPitchKey),11);
+ const auto scale=static_cast<pitchator::Scale>(discrete(getParamNormalized(kPitchScale),10));
+ scaleNotesLabel_->setText(VSTGUI::UTF8String(pitchator::scaleNoteNames(key,scale)));
+ scaleNotesLabel_->invalid();
 }
 void PitchatorController::syncToggleButtons(){
  auto sync=[this](VSTGUI::CTextButton* button,ParamID id,
