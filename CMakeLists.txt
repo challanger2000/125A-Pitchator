@@ -41,7 +41,7 @@ if(PITCHATOR_BUILD_VST3)
   GIT_TAG v3.8.1_build_84)
  FetchContent_MakeAvailable(vst3sdk)
  smtg_add_vst3plugin(Pitchator src/PitchatorVST.cpp src/PitchatorVST.h
-  src/PitchCurveView.cpp src/PitchCurveView.h src/CurveMailbox.h
+  src/PitchCurveView.cpp src/PitchCurveView.h src/BrandLogoView.cpp src/BrandLogoView.h src/CurveMailbox.h
   src/PitchEngine.h src/PitchScheduler.h src/PitchPointEdit.h)
  target_link_libraries(Pitchator PRIVATE sdk vstgui_support)
  target_link_libraries(PitchCurveMouseEventsTests PRIVATE sdk vstgui_support)
@@ -54,7 +54,7 @@ if(PITCHATOR_BUILD_VST3)
  endif()
  smtg_target_configure_version_file(Pitchator)
  add_executable(PitchatorParameterFlushTests tests/ParameterFlushTests.cpp
-  src/PitchatorVST.cpp src/PitchCurveView.cpp
+  src/PitchatorVST.cpp src/PitchCurveView.cpp src/BrandLogoView.cpp
   ${vst3sdk_SOURCE_DIR}/public.sdk/source/common/memorystream.cpp)
  target_compile_definitions(PitchatorParameterFlushTests PRIVATE PITCHATOR_NO_FACTORY=1)
  target_link_libraries(PitchatorParameterFlushTests PRIVATE sdk sdk_hosting vstgui_support)
