@@ -299,3 +299,29 @@ Rebuilt 1200x620 GUI grid from user's Studio One screenshot:
 - Added fail-fast 8th CTest to validate text-width headroom, collisions,
   baselines, correct logo and 100/150% extents. **This is NOT a Studio
   One physical GUI PASS**; native code build and user inspection pending.
+
+## Build #13: confirmed layout engineering QA, 2026-10-12
+
+- Full workflow: https://github.com/challanger2000/125A-Pitchator/actions/runs/38310480336
+- Tested HEAD: `bca28c71187253c6c78197af532bc844a8364398`
+- **8/8 CTest PASS**, including new `PitchatorUILayoutTests` for
+  geometry, text headroom, logo master derivation and 100/150% bounds.
+- **47/47 Steinberg VST3 Validator PASS**.
+- **125A Plugin Tester v0.2.9: 28 PASS, 0 WARNING, 0 FAIL**, including
+  five editor lifecycle cycles and native MIDI-I/O probe.
+- VST3 prototype artifact ID `11774014991`, diagnostics ID
+  `11775265058`.
+- ZIP independently downloaded, root is exactly `Pitchator.vst3`,
+  `Contents/x86_64-win/Pitchator.vst3` present and CRC OK.
+- The prior Build #12 failure was missing `BrandLogoView.cpp` from the
+  plugin and test-harness CMake source lists (LNK2001). Both targets now
+  include the renderer. This is a build-configuration mistake, **not**
+  evidence that Studio One rendering is already acceptable.
+- **Additional pre-FINAL packaging check:** the SDK-generated
+  `moduleinfo.json` contains trailing commas, which strict JSON parsers
+  reject. The VST3 validator accepted this bundle, but strict machine-readable
+  metadata should be repaired and revalidated before final distribution.
+- **Still NOT VERIFIED:** actual Studio One alignment, logo appearance,
+  100/150% zoom, physical mouse hitboxes and musical MIDI playback in host.
+
+Automatic CI trigger restored to **workflow_dispatch only**.

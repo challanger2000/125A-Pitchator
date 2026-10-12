@@ -1,8 +1,6 @@
 name: Pitchator Windows VST3
 on:
-  # One batched native GUI geometry/vector and full release QA run.
-  push:
-    branches: [v1.0.0]
+  # Manual-only: do not run expensive Actions on documentation/layout commits.
   workflow_dispatch:
 permissions:
   contents: read

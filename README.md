@@ -103,7 +103,7 @@ Validated commit `a2230df10aa7fd35636d26d7fbb9590cdf34f84b`:
 
 [125A QA traceability](docs/QA_TRACEABILITY.md) contains host/test limits.
 
-## Layout and vector master redesign — pending Build #12
+## Layout and vector master redesign — verified Windows Build #13
 
 The static GUI has been realigned at its original **1200×620 logical**
 size, with proportional 150% scaling to 1800×930. The headline and
@@ -122,5 +122,10 @@ curve. DSP, controller IDs, state and MIDI logic are unchanged.
 
 `PitchatorUILayoutTests` covers labels, clickable bounding boxes,
 spacing, conservative text extents, vector logo registration and 100/150%
-rectangles. **Real Studio One appearance remains NOT VERIFIED** until
-a newly compiled bundle is tested in the DAW.
+rectangles. **Windows Build #13**: 8/8 CTest PASS, 47/47 Steinberg
+Validator PASS, 125A Plugin Tester 28 PASS/0 WARNING/0 FAIL.
+[Verified GitHub Actions run](https://github.com/challanger2000/125A-Pitchator/actions/runs/38310480336).
+Prototype ZIP artifact ID `11774014991` contains
+`Pitchator.vst3/Contents/...` at the archive root and passed CRC checks.
+**Real Studio One appearance remains NOT VERIFIED** until user visual
+and mouse interaction acceptance.
