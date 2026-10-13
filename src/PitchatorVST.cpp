@@ -305,6 +305,7 @@ tresult PLUGIN_API PitchatorController::initialize(FUnknown* ctx){
  trig->appendString(STR16("HOST SYNC"));
  trig->appendString(STR16("NOTE CONTINUE"));
  trig->appendString(STR16("NOTE RETRIGGER"));
+ trig->setNormalized(0.5); // Apply default after StringListParameter options are complete.
  parameters.addParameter(trig);
  parameters.addParameter(new RangeParameter(STR16("Loop"),kPitchLoop,nullptr,
   0,1,1,1,ParameterInfo::kCanAutomate));
