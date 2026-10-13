@@ -1,5 +1,15 @@
 # 125A Pitchator V1 — binding product contract
 
+## Current audit status (2026-10-13)
+
+V1 is implemented as a development VST3 prototype and successfully passed
+[Windows Actions #38329739159](https://github.com/challanger2000/125A-Pitchator/actions/runs/38329739159)
+(9/9 CTests, Steinberg Validator, 125A Plugin Tester). The original scope
+and earlier prototype status passages below are retained as historical
+requirements, NOT present-day claims. Actual 3-choice Start Mode default
+is NOTE CONTINUE; current state schema is v3. The outstanding FINAL
+verification gates are tracked in [RELEASE_AUDIT_V1.md](RELEASE_AUDIT_V1.md).
+
 **Project state:** architecture and MIDI pitch-curve core in development. NO release claim.
 
 ## Product
