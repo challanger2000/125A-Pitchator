@@ -301,7 +301,7 @@ tresult PLUGIN_API PitchatorController::initialize(FUnknown* ctx){
   1,48,12,47,ParameterInfo::kCanAutomate));
  parameters.addParameter(new RangeParameter(STR16("Scale Lock"),kPitchLock,nullptr,
   0,1,0,1,ParameterInfo::kCanAutomate));
- auto* trig=new StringListParameter(STR16("Trigger"),kPitchTrigger);
+ auto* trig=new StringListParameter(STR16("Trigger"),kPitchTrigger,nullptr,0.5);
  trig->appendString(STR16("HOST SYNC"));
  trig->appendString(STR16("NOTE CONTINUE"));
  trig->appendString(STR16("NOTE RETRIGGER"));
