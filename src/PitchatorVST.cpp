@@ -159,7 +159,17 @@ tresult PLUGIN_API PitchatorProcessor::process(ProcessData& d){
   for(int32 i=0;i<d.inputEvents->getEventCount();++i){
    Event e{};if(d.inputEvents->getEvent(i,e)!=kResultOk)continue;
    if(ec>=inputs_.size()){
-    // Overflow: preserve all input note-offs and avoid truncating the MIDI stream.
+    // Overflow: preserve all incoming notes and explicitly center any
+    // prior channel bends BEFORE resetting internal scheduler state.
+    if(!scheduler_.center(0,[&](pitchator::Bend bend){
+     Event reset{};reset.type=Event::kLegacyMIDICCOutEvent;
+     reset.busIndex=0;reset.sampleOffset=bend.offset;
+     reset.midiCCOut.channel=static_cast<int8>(bend.channel);
+     reset.midiCCOut.controlNumber=static_cast<uint8>(kPitchBend);
+     reset.midiCCOut.value=static_cast<int8>(bend.value&127u);
+     reset.midiCCOut.value2=static_cast<int8>((bend.value>>7)&127u);
+     return d.outputEvents->addEvent(reset)==kResultOk;
+    }))return kResultFalse;
     scheduler_.reset();
     for(int32 k=0;k<d.inputEvents->getEventCount();++k){
      Event pass{};if(d.inputEvents->getEvent(k,pass)==kResultOk)
