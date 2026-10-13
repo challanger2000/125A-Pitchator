@@ -1,6 +1,6 @@
 # 125A Pitchator V1 — Release Audit (in progress)
 
-Audit baseline: branch `v1.0.0`, commit `67969079364847059cae77b31682a99a5218ec51`; Windows GitHub Actions run [38329739159](https://github.com/challanger2000/125A-Pitchator/actions/runs/38329739159). Document-only additions do not alter the tested binary.
+Last fully binary-tested baseline: branch `v1.0.0`, commit `67969079364847059cae77b31682a99a5218ec51`; Windows GitHub Actions run [38329739159](https://github.com/challanger2000/125A-Pitchator/actions/runs/38329739159). Since that run, audit-only documentation and test-coverage changes have been committed. The added tests are **NOT YET EXECUTED IN CI**; no production VST3 implementation or UI resource has changed after the successful run.
 
 ## Independently evidenced gates
 - Windows x64 VST3 build: PASS (job successful).
@@ -42,3 +42,9 @@ GUI-only tags: `900 UiZoom`, `901 Clear`, `902 Delete`, `903 Shape`, `904 Snap`,
 
 ## Audit release gate
 No Final repository transfer or release-ready claim until relevant points above are PASS with evidence or explicitly scoped out with a justified non-applicability note. Follow `125A-Engineering/ENGINEERING-GUARDRAILS.md` and `QA/RELEASE-QA.md`. Bundle tests and any corrections; avoid unnecessary CI cycles.
+
+## Audit reinforcement recorded after the successful baseline
+- `tests/UILayoutTests.cpp` now checks all view children against their **immediate parent** container bounds rather than only root screen bounds. A static preflight of 39 parsed UIDESC views found **0 nested overflow cases**; CTest execution of the added assertion is still pending.
+- `tests/UIContractTests.cpp` now includes GUI action 910 (JUMP TO 0) in the mandatory interactive tag inventory. Source confirms its UIDESC entry and controller handler; automated rerun is pending.
+- `README.md`, `docs/V1_SPEC.md` and `docs/QA_TRACEABILITY.md` now prominently identify current QA evidence while retaining earlier development notes as history.
+- **No new binary code changed during this audit batch.** A final CI run is required for the updated tests before a release candidate can be marked fully regression-verified.
