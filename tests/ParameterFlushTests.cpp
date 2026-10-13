@@ -377,7 +377,53 @@ static int runTests(){
  next->forget();prev->forget();clear->forget();remove->forget();
  posEdit->forget();pitchEdit->forget();graph->forget();
  CHECK(controller.terminate()==kResultOk);
- std::puts("VST3 parameter flush, three mouse toggles, host state and recall PASS");
+ // Overflow regression: 2049 incoming events must not leave the receiving
+ // synthesizer on a stale channel bend when scheduler falls back to passthrough.
+ auto overflowProcessor=std::make_unique<PitchatorProcessor>();
+ EventList overflowStartIn(4),overflowStartOut(8);
+ Event held{};held.type=Event::kNoteOnEvent;held.busIndex=0;
+ held.sampleOffset=0;held.noteOn.channel=3;held.noteOn.pitch=60;
+ held.noteOn.velocity=0.8f;held.noteOn.noteId=123;
+ CHECK(overflowStartIn.addEvent(held)==kResultOk);
+ ProcessContext overflowClock{};
+ overflowClock.state=ProcessContext::kPlaying |
+    ProcessContext::kProjectTimeMusicValid|ProcessContext::kTempoValid;
+ overflowClock.projectTimeMusic=1.0;overflowClock.tempo=120;
+ overflowClock.sampleRate=48000;
+ ParameterChanges overflowHost(1);
+ int32 ovIndex=0,ovPoint=0;
+ auto* ovQueue=overflowHost.addParameterData(kPitchTrigger,ovIndex);
+ CHECK(ovQueue!=nullptr);
+ CHECK(ovQueue->addPoint(0,0.0,ovPoint)==kResultOk); // HOST SYNC for +3 st
+ ProcessData first{};
+ first.numSamples=64;first.inputEvents=&overflowStartIn;
+ first.outputEvents=&overflowStartOut;
+ first.inputParameterChanges=&overflowHost;
+ first.processContext=&overflowClock;
+ CHECK(overflowProcessor->process(first)==kResultOk);
+ CHECK(overflowStartOut.getEventCount()>=2);
+ Event activeBend{};
+ CHECK(overflowStartOut.getEvent(0,activeBend)==kResultOk);
+ CHECK(activeBend.type==Event::kLegacyMIDICCOutEvent);
+ CHECK((static_cast<int>(activeBend.midiCCOut.value)&127)+
+       ((static_cast<int>(activeBend.midiCCOut.value2)&127)<<7)!=8192);
+ EventList overflowIn(4096),overflowOut(4096);
+ Event extra{};extra.type=Event::kNoteOffEvent;extra.busIndex=0;
+ extra.sampleOffset=0;extra.noteOff.channel=3;extra.noteOff.pitch=60;
+ extra.noteOff.noteId=123;
+ for(int i=0;i<2049;++i)CHECK(overflowIn.addEvent(extra)==kResultOk);
+ ProcessData excess{};excess.numSamples=64;
+ excess.inputEvents=&overflowIn;excess.outputEvents=&overflowOut;
+ excess.processContext=&overflowClock;
+ CHECK(overflowProcessor->process(excess)==kResultOk);
+ CHECK(overflowOut.getEventCount()==2050); // bend reset + all 2049 source events
+ Event centered{};
+ CHECK(overflowOut.getEvent(0,centered)==kResultOk);
+ CHECK(centered.type==Event::kLegacyMIDICCOutEvent);
+ CHECK(centered.midiCCOut.channel==3);
+ CHECK((static_cast<int>(centered.midiCCOut.value)&127)+
+       ((static_cast<int>(centered.midiCCOut.value2)&127)<<7)==8192);
+ std::puts("VST3 parameter flush, mouse toggles, host state, overflow and recall PASS");
  return 0;
 }
 int main(){
