@@ -1,5 +1,16 @@
 # 125A Pitchator V1 — QA control & requirement traceability
 
+## Current release-audit overlay (2026-10-13)
+
+The table and early-prototype notes immediately below are **historical** and
+must not be read as current implementation status. The up-to-date control
+inventory, source routes and per-gate PASS / NOT VERIFIED assessment is in
+[RELEASE_AUDIT_V1.md](RELEASE_AUDIT_V1.md). Latest binary evidence:
+[Windows Actions #38329739159](https://github.com/challanger2000/125A-Pitchator/actions/runs/38329739159),
+9/9 CTest, Steinberg Validator and complete 125A Plugin Tester PASS. The
+user reports Studio One MIDI routing and project save/reopen PASS.
+Independent real-host per-control traceability remains open before FINAL.
+
 Legend: **CORE TEST PASS** = locally defined deterministic assertions only;
 **NOT VERIFIED** = no valid end-to-end evidence yet. Never equate core tests
 to VST3 validator, 125A tester or Studio One acceptance.
