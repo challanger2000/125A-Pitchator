@@ -17,11 +17,12 @@ int main(){
   const std::string needle="tag=\""+std::to_string(tag)+"\"";
   if(xml.find(needle)==std::string::npos){std::printf("missing param %d\n",tag);return 2;}
  }
- for(int tag=900;tag<=909;++tag){
+ for(int tag=900;tag<=910;++tag){
   const std::string needle="control-tag=\""+
      std::string(tag==900?"UiZoom":tag==901?"Clear":tag==902?"Delete":
      tag==903?"Shape":tag==904?"Snap":tag==905?"Previous":
-     tag==906?"Next":tag==907?"GraphZoom":tag==908?"PointPosition":"PointPitch")+"\"";
+     tag==906?"Next":tag==907?"GraphZoom":tag==908?"PointPosition":
+     tag==909?"PointPitch":"AddJump")+"\"";
   if(xml.find(needle)==std::string::npos){std::printf("missing UI control %d\n",tag);return 3;}
  }
  const std::array<const char*,7> routes={"PitchatorController::valueChanged",
