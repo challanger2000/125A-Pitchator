@@ -59,3 +59,12 @@ No Final repository transfer or release-ready claim until relevant points above 
 - Run 38329739159 prototype artifact ID `11782369102`, GitHub-reported ZIP archive size 1,644,891 bytes, not expired.
 - QA diagnostics artifact ID `11782344338`.
 - Independent extraction, bundle manifest verification and cryptographic hash for the final **corrected** candidate remain pending and must not reuse Build #23's hash.
+
+## Updated CI verification — 2026-10-13
+- Latest Windows QA run: https://github.com/challanger2000/125A-Pitchator/actions/runs/38331057978 — **SUCCESS**.
+- CTest **9/9 PASS**, including the new 2049-event overflow/reset regression, expanded immediate-parent GUI clipping check, and mandatory AddJump control tag inventory.
+- Steinberg Validator **47/47 PASS**.
+- 125A Plugin Tester Final v0.2.9 **PASS**; I/O Event Probe and Editor Lifecycle Probe both report **Result: PASS**.
+- Branded VST3 artifact upload succeeded.
+- The former source-fix CI-pending blockers are now **verified closed**; any earlier 'CI pending' language in this audit describes the historical pre-run state.
+- **Still not a complete FINAL gate**: missing explicit host-level 150% resize/click matrix and comprehensive per-control automation, transport/tempo and downstream synthesizer checks remain separately NOT VERIFIED. No new code changes are warranted without finding a specific defect.
