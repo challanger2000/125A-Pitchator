@@ -7,7 +7,7 @@ namespace pitchator {
 enum class TriggerMode : int {Host=0,Continue=1,Note=2};
 struct Settings {
  int key=0; Scale scale=Scale::Chromatic; int range=12;
- bool lock=false; TriggerMode trigger=TriggerMode::Host;
+ bool lock=false; TriggerMode trigger=TriggerMode::Continue;
  bool loop=true,bypass=false;
 };
 struct Clock {
