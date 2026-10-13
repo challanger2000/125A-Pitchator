@@ -105,7 +105,7 @@ int main(){
  CHECK(noteId>=0&&nodes[noteId].parent==panel);
  CHECK(nodes[noteId].cls=="CTextLabel"&&nodes[noteId].transparent=="true");
  CHECK(nodes[noteId].font=="Notes");
- CHECK(factory.find("pitchator-id=\"scale-notes\" font=\"Notes\" font-color=\"Text\"")!=std::string::npos);
+ CHECK(xml.find("pitchator-id=\"scale-notes\" font=\"Notes\" font-color=\"Text\"")!=std::string::npos);
  CHECK(nodes[noteId].rect.x==16&&nodes[noteId].rect.y==88);
  CHECK(nodes[noteId].rect.w==1122&&nodes[noteId].rect.h==20);
  CHECK(factory.find("syncScaleNotes()")!=std::string::npos);
