@@ -8,7 +8,9 @@ int main(){
  CHECK(p.upsert({960,3,Curve::Step}));
  CHECK(p.upsert({1920,1,Curve::Linear}));
  CHECK(p.upsert({2880,0,Curve::Linear}));
- Settings cfg;Clock h{true,true,0,120,48000};Scheduler s;
+ Settings cfg;CHECK(cfg.trigger==TriggerMode::Continue); // new instance default
+ cfg.trigger=TriggerMode::Host; // legacy HOST SYNC test fixture remains explicit
+ Clock h{true,true,0,120,48000};Scheduler s;
  std::vector<Bend> results;
  auto sink=[&](Bend b){results.push_back(b);return true;};
  s.noteOn(0,60,cfg,0);
