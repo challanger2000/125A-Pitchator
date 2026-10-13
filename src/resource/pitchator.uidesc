@@ -13,6 +13,7 @@
   <font name="Section" font-name="Arial" size="17" bold="true" italic="false"/>
   <font name="Small" font-name="Arial" size="13" bold="false" italic="false"/>
   <font name="Caption" font-name="Arial" size="12" bold="false" italic="false"/>
+  <font name="Notes" font-name="Arial" size="14" bold="true" italic="false"/>
  </fonts>
  <control-tags>
   <control-tag name="Key" tag="100"/>
@@ -98,7 +99,7 @@
     <!-- Music-theory reference only. Scale Lock remains independently switchable. -->
     <view class="CTextLabel" origin="16, 88" size="1122, 20"
       title="NOTES: C  ·  C♯  ·  D  ·  D♯  ·  E  ·  F  ·  F♯  ·  G  ·  G♯  ·  A  ·  A♯  ·  B"
-      pitchator-id="scale-notes" font="Caption" font-color="Accent"
+      pitchator-id="scale-notes" font="Notes" font-color="Text"
       transparent="true" text-alignment="left"/>
   </view>
   <view class="CTextLabel" origin="36, 219" size="320, 24" title="PITCH CURVE"
