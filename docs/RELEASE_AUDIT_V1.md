@@ -48,3 +48,14 @@ No Final repository transfer or release-ready claim until relevant points above 
 - `tests/UIContractTests.cpp` now includes GUI action 910 (JUMP TO 0) in the mandatory interactive tag inventory. Source confirms its UIDESC entry and controller handler; automated rerun is pending.
 - `README.md`, `docs/V1_SPEC.md` and `docs/QA_TRACEABILITY.md` now prominently identify current QA evidence while retaining earlier development notes as history.
 - **No new binary code changed during this audit batch.** A final CI run is required for the updated tests before a release candidate can be marked fully regression-verified.
+
+## Confirmed safety defect identified during audit (fixed in source, CI pending)
+- On input-event count exceeding the 2048-event processing buffer, the original fallback called `scheduler_.reset()` without first transmitting a center Pitch Bend to channels already bent in a previous block. A downstream synth could consequently stay detuned.
+- Production fix `d402a94`: center existing channel bends at offset 0 before the emergency MIDI passthrough/reset; the source input events remain forwarded.
+- Regression test `4b46c6c`: generate a noncenter bend, feed 2049 input MIDI events, check reset event value 8192 and all 2049 forwarded events.
+- **Status: corrected, NOT YET CI-VERIFIED.** No release claims until updated test, validator and 125A suite all pass. Further hostile-input and automation edge cases remain part of audit.
+
+## Existing successful artifact metadata (not the corrected build)
+- Run 38329739159 prototype artifact ID `11782369102`, GitHub-reported ZIP archive size 1,644,891 bytes, not expired.
+- QA diagnostics artifact ID `11782344338`.
+- Independent extraction, bundle manifest verification and cryptographic hash for the final **corrected** candidate remain pending and must not reuse Build #23's hash.
