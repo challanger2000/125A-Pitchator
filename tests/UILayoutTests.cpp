@@ -80,6 +80,15 @@ int main(){
   if(!selfClosing)stack.push_back(index);
  }
  CHECK(stack.empty());CHECK(nodes.size()>=35);
+ // A child must fit INSIDE its immediate container, not merely the editor root.
+ // This catches clipped controls that still pass flat 1200x620 bounds checks.
+ for(const auto& n:nodes){
+  if(n.parent<0)continue;
+  const auto& p=nodes[static_cast<size_t>(n.parent)];
+  CHECK(n.rect.x>=0&&n.rect.y>=0);
+  CHECK(n.rect.x+n.rect.w<=p.rect.w+0.001);
+  CHECK(n.rect.y+n.rect.h<=p.rect.h+0.001);
+ }
  auto find=[&](const char* tag)->int{
   for(size_t i=0;i<nodes.size();++i)if(nodes[i].tag==tag)return static_cast<int>(i);
   return -1;
