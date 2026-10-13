@@ -55,6 +55,7 @@ static int runTests(){
   }
  }
  CHECK(foundThreeTriggers);
+ CHECK(controller.getParamNormalized(kPitchTrigger)==0.5); // fresh instances start NOTE CONTINUE
  CHECK(flushBypass(*processor,1));
  MemoryStream snapshot;
  CHECK(processor->getState(&snapshot)==kResultOk);
