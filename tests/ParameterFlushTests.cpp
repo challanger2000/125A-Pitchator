@@ -79,6 +79,19 @@ static int runTests(){
  // Integration probe: GUI-shaped CurvePacket -> IMessage -> processor
  // mailbox -> real ProcessData MIDI output list, *not* just a curve-unit test.
  auto routed=std::make_unique<PitchatorProcessor>();
+ // This integration fixture validates absolute HOST SYNC PPQ mapping.
+ // Select it explicitly; fresh plugin instances default to NOTE CONTINUE.
+ {
+  ParameterChanges modeChanges(1);
+  int32 index=0,point=0;
+  auto* queue=modeChanges.addParameterData(kPitchTrigger,index);
+  CHECK(queue!=nullptr);
+  CHECK(queue->addPoint(0,0.0,point)==kResultOk);
+  ProcessData flush{};
+  flush.numSamples=0;
+  flush.inputParameterChanges=&modeChanges;
+  CHECK(routed->process(flush)==kResultOk);
+ }
  pitchator::Pattern modified;
  CHECK(modified.setBars(2));
  CHECK(modified.upsert({960,-3.0,pitchator::Curve::Step}));
