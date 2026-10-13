@@ -1,5 +1,18 @@
 # 125A Pitchator — Development V1
 
+## Current QA reference (2026-10-13)
+
+The authoritative verified Windows CI run for this V1 development line is
+[Actions #38329739159](https://github.com/challanger2000/125A-Pitchator/actions/runs/38329739159):
+**9/9 CTest PASS, Steinberg Validator PASS, 125A Plugin Tester Final v0.2.9 PASS**
+including MIDI I/O and editor lifecycle probes. The Studio One user also
+reported MIDI routing, graph interaction and project save/reopen working.
+This is **still a prototype, not FINAL**. The release control matrix and
+remaining non-CI host gates are recorded in
+[the active Release Audit](docs/RELEASE_AUDIT_V1.md).
+The historical milestones below are preserved for traceability and do not
+supersede this current QA reference.
+
 125A Pitchator is a planned **scale-aware MIDI pitch-bend sequencer** with
 an editable 1–16-bar curve. This repository is an early development branch,
 **not** a usable VST3 download or a finished product.
